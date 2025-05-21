@@ -1,5 +1,5 @@
 import TextField  from "@mui/material/TextField"
-function Formulaire({ id ,label, name, autoComplete ,type, icone}) {
+function Formulaire({ id ,label, name, autoComplete ,type, icone, value, onChange }) {
   return (
     <TextField
                 margin="normal"
@@ -12,6 +12,8 @@ function Formulaire({ id ,label, name, autoComplete ,type, icone}) {
                 type={type}
                 sx={{ width : { xs: '100%', sm: '100%', md:'90%' } }}
                 icone={icone} 
+                value={value}
+                onChange={onChange}
     />
   );
 }

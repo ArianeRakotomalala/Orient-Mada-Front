@@ -1,5 +1,5 @@
 import  {Button } from '@mui/material';
-function Bouton({label, backgroundColor, color, borderColor,hoverbackground, hoverColor ,startIcon, ...props}) {
+function Bouton({label, type, backgroundColor, color, borderColor,hoverbackground, hoverColor ,startIcon, ...props}) {
     return(
     <Button
         type="submit"
@@ -16,6 +16,7 @@ function Bouton({label, backgroundColor, color, borderColor,hoverbackground, hov
         }}
         startIcon ={startIcon}
         {...props}
+
     >
     
     {label}

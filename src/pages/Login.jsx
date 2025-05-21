@@ -1,12 +1,29 @@
 import {  Typography, Paper, Grid } from '@mui/material';
-import React from 'react';
 import GoogleIcon from '@mui/icons-material/Google';
 import img from '../assets/log.png';
 import Formulaire from '../components/Formulaire';
 import Bouton from '../components/Bouton';
-
+import login from '../services/auth';
+import {useState } from 'react';
 
 function Login() {
+  const [credentials,setCredentials]=useState({email:'',password:''})
+  const [authErreur, setError] = useState('');
+  const handleChange = (e) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+  };
+  const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const token = await login(credentials);
+          localStorage.setItem('jwtToken', token);
+          window.location.href = '/'; 
+        } catch (err) {
+          if (err.response && err.response.status === 401) {
+            setError('Identifiants incorrects');
+          }
+        }
+  }
   return (
     // CONTAINER , ilay gris ivelany
     <Grid
@@ -54,7 +71,12 @@ function Login() {
                       <Typography variant="body1" sx={{ mb: 2,  color:'black', opacity: 0.7 }}>
                         Veuillez entrer vos identifiants pour vous connecter. 
                       </Typography>
-
+                      {authErreur && (
+                        <Typography color="error" sx={{ mb: 2 }}>
+                          {authErreur}
+                        </Typography>
+                      )}
+                    <form onSubmit={handleSubmit} >
                       <Formulaire
                         id="email"
                         label="Adresse email"
@@ -62,7 +84,8 @@ function Login() {
                         autoComplete="email"
                         type="email"
                         autoFocus
-                        icone ={<GoogleIcon  sx={{ mr: 1 }}/>}
+                        value={credentials.email}
+                        onChange={handleChange}
                       />
                       <Formulaire
                         id="password"
@@ -70,10 +93,12 @@ function Login() {
                         name="password"
                         autoComplete="current-password"
                         type="password"
+                        value={credentials.password}
+                        onChange={handleChange}
                       />
                       <Typography
                         variant="body1"
-                        sx={{ mb: 2,  color:'black', opacity: 0.7, textAlign:'right', mx: '9%' }}>
+                        sx={{ mb:{xs:0, sm:0, md:2} ,  color:'black', opacity: 0.7, textAlign:'right', mx: '9%' }}>
                         <a href="/forgot-password" style={{textDecoration: 'none' ,color: 'black',}}>Mot de passe oublié ?</a>
                       </Typography>
                       
@@ -93,13 +118,13 @@ function Login() {
                         color='black'
                         borderColor='#B67878'
                       />
+                      </form>
                       <Typography variant="body2">
                         Vous n'avez pas de compte ? <a href="/register" >Inscrivez-vous</a>
                       </Typography>
-          
             </Grid>
 
-              {/* IMAGE */}
+            {/* IMAGE */}
             <Grid
               size={{ xs: 0, md: 6 }}
               sx={{
