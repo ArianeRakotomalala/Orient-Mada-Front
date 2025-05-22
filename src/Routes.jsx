@@ -1,13 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import Users from "./pages/Users";
 import Login from "./pages/login";
+import Layout from "./components/Layout";
+import Register from "./pages/Register";
 function AppRoute() {
     return (
-    <Routes>    
+    <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login/>} />    
         <Route path="/" element={<Home />} /> 
-        <Route path="/utilisateurs" element={<Users />} />
-        <Route path="/login" element={<Login/>} />
+        <Route path="/layout" element={<Layout/>} /> 
     </Routes>
     )
 }
