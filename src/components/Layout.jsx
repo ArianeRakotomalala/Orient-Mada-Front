@@ -1,69 +1,104 @@
-import { Grid,Box } from "@mui/material";
+import { Grid,Box,Paper } from "@mui/material";
 import { Outlet } from "react-router-dom";
-
+import Slidebar from "./Slidebar";
+import Feed from "./Feed";  
+import RightPanel from "./RightPanel";
 function Layout() { 
     return (
         <Grid 
             container
-            component="layout"
+            component="Box"
             sx={{ 
                 display:'flex',
                 flexDirection:'row',
-                height: '100vh',
-                // backgroundColor: 'red' 
+                height: {xs:'100vh', sm:'100vh', md:'100vh', lg:'100vh', xl:'100vh'},
             }}>
+                {/* Navigation */}
                 <Grid
-                    // xs={0}
-                    // sm={4}
+                    component={Paper}
+                    elevation={2}
                     md={4}
-                    component={Box}
                     sx={{
-                        backgroundColor: 'blue',
-                        // display: { xs: 'none', sm: 'block' }
-                        height: '100%',
+                        // backgroundColor: 'blue',
+                        height: {
+                            xs: '30%',
+                            sm: '30%',
+                            md: '100%',
+                            lg: '100%',
+                            xl: '100%',
+                        },
                         width: {
                             xs: '100%',
                             sm: '50%',
-                            md: '33.33%',
+                            md: '18%',
+                            lg: '18%',
+                            xl: '18%',
                         }
                     }}
-                />
+                >
+                    <Box>
+                        <Slidebar />
+                    </Box>
+                </Grid>
+
+                {/* Zone centrale */}
                 <Grid
-                    // xs={0}
-                    // sm={4}
                     md={4}
                     component={Box}
                     sx={{
-                        backgroundColor: 'green',
-                        // display: { xs: 'none', sm: 'block' }, 
-                        height: '100%',
+                        backgroundColor: '#F5F7FB',
+                        // backgroundColor: 'green', 
+                        height: '100vh',
+                        overflowY: 'auto',
                        width: {
                             xs: '100%',
                             sm: '50%',
-                            md: '33.33%',
-                        }
+                            md: '47%',
+                            lg: '47%',
+                            xl: '47%',
+                        },
+                        '&::-webkit-scrollbar': {
+                        width: '1px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            // backgroundColor: 'grey',
+                            borderRadius: '10px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: 'white',
+                            // borderRadius: '10px',
+                        },
+                        '&::-webkit-scrollbar-thumb:hover': {
+                            // backgroundColor: '#555',
+                        },
                     }}
-                />
+                >
+                    <Feed />
+                    {/* <Outlet /> */}
+                    <Outlet />
+                </Grid>
+                
+                {/* Zone de droite */}
                 <Grid
-                    // xs={12}
-                    // sm={4}
                     md={4}
                     component={Box}
                     sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'center',
-                        p: 4,
-                        backgroundColor:'yellow',
+                        p: 1,
+                        backgroundColor: '#F5F7FB',
                         height: '100%',
                         width: {
                             xs: '100%',
                             sm: '100%',
-                            md: '32.6%',
+                            md: '35%',
+                            lg: '35%',
+                            xl: '35%',
                         }
                     }}     
-                />
-                {/* <Outlet />       */}
+                >
+                    <RightPanel/>
+                </Grid>
        </Grid>
     );
 }    
