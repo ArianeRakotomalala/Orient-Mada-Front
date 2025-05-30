@@ -11,7 +11,7 @@ function RightPanel(){
         {
             id: 1,
             name: 'ONIFRA',
-            description: 'L\'ONIFRA est une institution de formation reconnue pour son excellence académique.',
+            // description: 'L\'ONIFRA est une institution de formation reconnue pour son excellence académique.',
             ville: 'Ampandrana, Antananarivo',
             img: 'https://i.pinimg.com/736x/e8/6a/3d/e86a3dba21f62a1d48281d0af01ef225.jpg',
 
@@ -20,7 +20,7 @@ function RightPanel(){
         {
             id: 2,
             name: 'UCM',
-            description: 'L\'UCM est un institut de renom qui offre des programmes variés.',
+            // description: 'L\'UCM est un institut de renom qui offre des programmes variés.',
             ville: 'Ambanidia, Antananarivo',
             img: 'https://i.pinimg.com/736x/47/8f/74/478f74342329caac9feff40379ab3658.jpg',
         },
@@ -45,27 +45,28 @@ function RightPanel(){
                             // padding: "8px 0",
                         }}
                 >
-                    <Box sx={{ flexGrow: 1, mx: 1 }}>
-                        <Box display="flex" alignItems="center" gap={1}>
+                    <Box sx={{ flexGrow: 1, mx: 1  }}>
+                        <Box display="flex" alignItems="center" gap={1} sx={{ mb: 1.5, mt: 1 }}>
                             <Avatar src={uni.img} />
-                            <Typography variant="subtitle1" fontWeight="bold" color="Green">
+                            <Typography variant="subtitle1" fontWeight="bold" color="black" sx={{  textAlign: 'right' }}>
                                 {uni.name}
                             </Typography>
+                        
+                              {/* <Rating name="read-only" value={rate}  size="small"  sx={{mx:5}}/> */}
+                            
                         </Box>
-                        <Typography variant="body2" sx={{ textAlign: 'justify', fontSize: 13, width: 320 }}>
-                            {uni.description}
-                        </Typography>
-                        <Box display="flex" alignItems="center">
+                        {/* <Box display="flex" alignItems="center" sx={{ mx: 5, mt:-1.5 }}>
                             <LocationOnOutlinedIcon fontSize="small" sx={{ mr: 0.3 }} />
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                                 {uni.ville}
                             </Typography>
-                        </Box>
-                        <Rating name="read-only" value={rate}  size="small" />
+                        </Box> */}
+                        
                     </Box>
-                    <Button size="small" variant="h1" 
+                    
+                    <Button size="small" variant="h3" 
                         sx={{
-                            fontSize: '0.8rem',
+                            fontSize: '0.7rem',
                             textTransform: 'none',
                             backgroundColor: 'black',
                             borderRadius: '30px',
@@ -78,23 +79,26 @@ function RightPanel(){
                     >
                         Découvrir
                     </Button>
+                    
                 </Box>
+                
             ))}
         {/* Orientation Rapide */}
         <Grid
             sx={{
-                backgroundColor: '#F5F7FB',
+                // backgroundColor: '#F5F7FB',
                 padding: 1,
                 borderRadius: 3,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                // marginTop: ,
+                // boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                marginTop:2,
                 textAlign: 'left',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-start',
             }}
         >
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2E3B55', mb: 0.5 }}>
+            {/* 2E3B55 */}
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', mb: 0.5 }}>
                 Orientation rapide
             </Typography>
             <Typography variant="body2" sx={{ fontSize: 13, color: '#5A5A5A', mb: 2 }}>

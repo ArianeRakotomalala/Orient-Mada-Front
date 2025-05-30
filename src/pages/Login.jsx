@@ -16,9 +16,10 @@ function Login() {
   const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-          const token = await login(credentials);
+          const {user, token }= await login(credentials);
           localStorage.setItem('jwtToken', token);
-          window.location.href = '/'; 
+          localStorage.setItem('user_info', JSON.stringify(user));
+          window.location.href = '/layout'; 
         } catch (err) {
           if (err.response && err.response.status === 401) {
             setError('Identifiants incorrects');

@@ -4,6 +4,9 @@ const login = async ({ email, password }) => {
     email: email,
     password: password,
   });
-  return response.data.token;
+ return {
+    token: response.data.token,
+    user: response.data.user
+ }
 };
 export default login;

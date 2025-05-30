@@ -12,17 +12,13 @@ function AppRoute() {
     <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login/>} />    
-        {/* <Route path="/" element={<Home />} /> */}
+        
         <Route path="/layout" element={<Layout/>}> 
-            <Route path="home" element={<Home />} />
+            <Route index element={<Home/>} />
             <Route path="university" element={<Login />} />
-            {/* <Route path="explore" element={<Register />} /> */}
-            {/* <Route path="formation" element={<Formation />} /> */}
-            {/* <Route path="event" element={<Event />} /> */}
+            <Route index element={<Feed />} />
             <Route path="orientation" element={<Essai />} />
-            <Route path="postcard" element={<Feed/>} />
         </Route>
-        <Route path="/story" element={<Story/>} />
             
     </Routes>
     )

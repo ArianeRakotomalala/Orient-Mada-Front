@@ -4,10 +4,48 @@ import Bouton from '../components/Bouton';
 import register from '../assets/register1.jpg';
 import { Typography , styled} from '@mui/material';
 import { useState } from 'react';
-
-
-
+import axios from 'axios';
 function Register() {
+    const [email, setEmail] = useState('');
+    const [phone, setPhone]= useState('');
+    const [plainPassword, setPlainPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [message, setMessage] = useState('');
+    const handleSignup = async (e) => {
+        e.preventDefault();
+            if (plainPassword !== confirmPassword) {
+            setMessage("Les mots de passe ne correspondent pas.");
+            return;
+            }
+            console.log('Données envoyées:', {
+                email,
+                password: plainPassword,
+                telephone: phone,
+                roles: ["ROLE_USER"]
+            });
+
+            try { const response = await axios.post(
+                '/api/users',
+                    {
+                        email: email,
+                        password: plainPassword,
+                        telephone: phone,
+                        roles: ["ROLE_USER"]
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/ld+json'
+                        }
+                    }
+            );
+            setMessage("Inscription réussie !");
+            } catch (error) {
+                setMessage("Erreur : " + (error.response?.data?.detail || "Échec de l'inscription"));
+            }
+    };
+
+
+
     const StyledLink = styled('a')({
         textDecoration: 'underline',
         color: 'black',
@@ -18,11 +56,6 @@ function Register() {
     },
         });
 
-    const [informations,setInformations]=useState({email:'', phone:'',password:'', password1:''})
-    //   const [authErreur, setError] = useState('');
-      const handleChange = (e) => {
-        setInformations({ ...informations, [e.target.name]: e.target.value });
-      };
     return (
         <AuthRegisterLayout image={register}>
             <Typography component="h1" variant="h4" sx={{ mb: 2, mt:4, fontWeight: 'bolder', color: 'black' }}>
@@ -31,7 +64,12 @@ function Register() {
             <Typography variant="body1" sx={{ mb: 2,  color:'black', opacity: 0.7 }}>
                 Veuillez entrer vos informations pour vous inscrire.
             </Typography>
-            <form  >
+            {message && (
+                <Typography color={message.includes('réussie') ? 'green' : 'red'} sx={{ mt: 2 }}>
+                {message}
+            </Typography>
+            )}
+            <form  onSubmit={handleSignup} >
                     <Formulaire
                         id="email"
                         label="Adresse email"
@@ -39,8 +77,8 @@ function Register() {
                         autoComplete="email"
                         type="email"
                         autoFocus
-                        value={informations.email}
-                        onChange={handleChange}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                     />
                     <Formulaire
                         id="phone"
@@ -48,8 +86,8 @@ function Register() {
                         name="phone"
                         autoComplete="phone"
                         type="tel"
-                        // value={credentials.password}
-                        onChange={handleChange}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
                     />
                     <Formulaire
                         id="password1"
@@ -57,8 +95,8 @@ function Register() {
                         name="password"
                         autoComplete="current-password"
                         type="password"
-                        value={informations.password}
-                        onChange={handleChange}
+                        value={plainPassword}
+                       onChange={(e) => setPlainPassword(e.target.value)}
                     />
                     <Formulaire
                         id="password2"
@@ -66,10 +104,11 @@ function Register() {
                         name="password1"
                         autoComplete="current-password"
                         type="password"
-                        value={informations.password1}
-                        onChange={handleChange}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                     <Bouton
+                        
                         label="Se connecter"
                         backgroundColor='black' 
                         hoverbackground='#B67878'  

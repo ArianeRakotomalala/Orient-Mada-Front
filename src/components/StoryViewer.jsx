@@ -62,6 +62,7 @@ export default function StoryViewer() {
 
   return (
     <>
+
       <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
               Stories
       </Typography>   
@@ -72,8 +73,8 @@ export default function StoryViewer() {
                 key={story.id}
                 onClick={() => handleOpen(story)}
                 sx={{
-                    height: 130,
-                    width: 100,
+                    height: 150,
+                    width: 120,
                     backgroundSize: 'cover',
                     backgroundImage: `url(${story.image})`,
                     borderRadius: 2,

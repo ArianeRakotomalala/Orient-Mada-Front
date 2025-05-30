@@ -41,65 +41,17 @@ function Layout() {
                     </Box>
                 </Grid>
 
-                {/* Zone centrale */}
-                <Grid
-                    md={4}
-                    component={Box}
-                    sx={{
-                        backgroundColor: '#F5F7FB',
-                        // backgroundColor: 'green', 
-                        height: '100vh',
-                        overflowY: 'auto',
-                       width: {
+            <Grid sx={{backgroundColor: 'green' ,width: {
                             xs: '100%',
                             sm: '50%',
-                            md: '47%',
-                            lg: '47%',
-                            xl: '47%',
-                        },
-                        '&::-webkit-scrollbar': {
-                        width: '1px',
-                        },
-                        '&::-webkit-scrollbar-track': {
-                            // backgroundColor: 'grey',
-                            borderRadius: '10px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                            backgroundColor: 'white',
-                            // borderRadius: '10px',
-                        },
-                        '&::-webkit-scrollbar-thumb:hover': {
-                            // backgroundColor: '#555',
-                        },
-                    }}
-                >
-                    <Feed />
-                    {/* <Outlet /> */}
-                    <Outlet />
-                </Grid>
-                
-                {/* Zone de droite */}
-                <Grid
-                    md={4}
-                    component={Box}
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        p: 1,
-                        backgroundColor: '#F5F7FB',
-                        height: '100%',
-                        width: {
-                            xs: '100%',
-                            sm: '100%',
-                            md: '35%',
-                            lg: '35%',
-                            xl: '35%',
-                        }
-                    }}     
-                >
-                    <RightPanel/>
-                </Grid>
-       </Grid>
+                            md: '82%',
+                            lg: '82%',
+                            xl: '82%',
+            }}} >
+                <Outlet/>
+            </Grid>
+         </Grid> 
+       
     );
 }    
 export default Layout;

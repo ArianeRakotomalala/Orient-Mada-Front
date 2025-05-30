@@ -72,7 +72,7 @@ function PostCard({ title, description, ville, srcimage, university }) {
                         fontWeight: "bold",
                         px: 3,
                         py: 1,
-                        boxShadow: 1,
+                        // boxShadow: 1,
                         '&:hover': {
                             background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
                             color: 'white',
