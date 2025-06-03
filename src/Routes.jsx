@@ -7,16 +7,17 @@ import PostCard from "./components/PostCard";
 import Feed from "./components/Feed";
 import Essai from "./pages/Orientation";
 import Story from "./components/StoryViewer";
+import University from "./pages/university";
 function AppRoute() {
     return (
     <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login/>} />    
         
-        <Route path="/layout" element={<Layout/>}> 
+        <Route path="/home" element={<Layout/>}> 
             <Route index element={<Home/>} />
-            <Route path="university" element={<Login />} />
-            <Route index element={<Feed />} />
+            <Route path="university" element={<University />} />
+
             <Route path="orientation" element={<Essai />} />
         </Route>
             

@@ -30,9 +30,9 @@ function Layout() {
                         width: {
                             xs: '100%',
                             sm: '50%',
-                            md: '18%',
-                            lg: '18%',
-                            xl: '18%',
+                            md: '22%',
+                            lg: '22%',
+                            xl: '22%',
                         }
                     }}
                 >
@@ -40,13 +40,14 @@ function Layout() {
                         <Slidebar />
                     </Box>
                 </Grid>
-
-            <Grid sx={{backgroundColor: 'green' ,width: {
+             
+                    {/* ZONE CENTRALE A REMPLACER  */}
+            <Grid sx={{width: {
                             xs: '100%',
                             sm: '50%',
-                            md: '82%',
-                            lg: '82%',
-                            xl: '82%',
+                            md: '78%',
+                            lg: '78%',
+                            xl: '78%',
             }}} >
                 <Outlet/>
             </Grid>

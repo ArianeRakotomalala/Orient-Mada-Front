@@ -2,6 +2,8 @@ import Feed from "../components/Feed";
 import { Box, Grid } from "@mui/material";
 import RightPanel from "../components/RightPanel";
 
+// affichage de zone centrale et de rightpanel ensemble
+
 function Home() {
   return (
     <Grid

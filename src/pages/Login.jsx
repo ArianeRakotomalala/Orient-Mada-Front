@@ -19,7 +19,7 @@ function Login() {
           const {user, token }= await login(credentials);
           localStorage.setItem('jwtToken', token);
           localStorage.setItem('user_info', JSON.stringify(user));
-          window.location.href = '/layout'; 
+          window.location.href = '/home'; 
         } catch (err) {
           if (err.response && err.response.status === 401) {
             setError('Identifiants incorrects');
@@ -38,7 +38,13 @@ function Login() {
             <Typography color="error" sx={{ mb: 2 }}>
               {authErreur}
             </Typography>
+            
           )}
+          {/* {message && (
+                <Typography color={message.includes('réussie') ? 'green' : 'red'} sx={{ mt: 2 }}>
+                {message}
+                </Typography>
+          )} */}
             <form onSubmit={handleSubmit} >
                 <Formulaire
                   id="email"

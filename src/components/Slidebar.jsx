@@ -18,6 +18,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
+import { useParams } from 'react-router-dom';
 
 
 const navLinkStyle = ({ isActive }) => ({
@@ -71,6 +72,7 @@ function Slidebar() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
+                fontFamily:'"Roboto", "Helvetica", "Arial", sans-serif'
             }}
         >
             <Box>
@@ -90,7 +92,7 @@ function Slidebar() {
                         <Box display="flex" alignItems="center" gap={2} mb={1}>
                             <Avatar sx={{ width: 48, height: 48 }}>{initial}</Avatar>
                             <Box display="flex" flexDirection="column" justifyContent="center">
-                                <Typography variant="body1" fontWeight="bold">
+                                <Typography variant="body1" fontWeight="bold" fontSize={14}>
                                     {user.email}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
@@ -111,10 +113,10 @@ function Slidebar() {
                 <Divider sx={{ my: 2 }} />
 
                 <nav>
-                    <NavLink to="/explore" style={navLinkStyle}>
+                    <NavLink to="/home/explore" style={navLinkStyle}>
                         <ExploreIcon sx={{ mr: 1 }} /> Explorer
                     </NavLink>
-                    <NavLink to="/university" style={navLinkStyle}>
+                    <NavLink to="/home/university" style={navLinkStyle}>
                         <SchoolIcon sx={{ mr: 1 }} /> Universités
                     </NavLink>
                     <NavLink to="/formation" style={navLinkStyle}>

@@ -21,14 +21,15 @@ function Register() {
                 email,
                 password: plainPassword,
                 telephone: phone,
-                roles: ["ROLE_USER"]
+                role:"ROLE_USER"
+                
             });
 
             try { const response = await axios.post(
                 '/api/users',
                     {
                         email: email,
-                        password: plainPassword,
+                        plainPassword: plainPassword,
                         telephone: phone,
                         roles: ["ROLE_USER"]
                     },
@@ -36,9 +37,11 @@ function Register() {
                         headers: {
                             'Content-Type': 'application/ld+json'
                         }
-                    }
+                    },
+               
             );
             setMessage("Inscription réussie !");
+            window.location.href = '/login'
             } catch (error) {
                 setMessage("Erreur : " + (error.response?.data?.detail || "Échec de l'inscription"));
             }
@@ -67,7 +70,7 @@ function Register() {
             {message && (
                 <Typography color={message.includes('réussie') ? 'green' : 'red'} sx={{ mt: 2 }}>
                 {message}
-            </Typography>
+                </Typography>
             )}
             <form  onSubmit={handleSignup} >
                     <Formulaire

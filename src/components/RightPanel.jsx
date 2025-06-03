@@ -106,7 +106,7 @@ function RightPanel(){
             </Typography>
             <Button
                 component={Link}
-                to="/layout/orientation"
+                to="/home/orientation"
                 variant="contained"
                 sx={{
                     mt: 1,
@@ -176,8 +176,6 @@ function RightPanel(){
         </Button>
     </Box>
 </Box>
-
-
 
     </>
     );
