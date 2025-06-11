@@ -19,6 +19,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import { useParams } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 
 const navLinkStyle = ({ isActive }) => ({
@@ -52,6 +53,18 @@ function Slidebar() {
     const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
 
+    <Typography
+        component="h1"
+        variant="h5"
+        sx={{ mb: 4, mt: 2, fontWeight: 'bold' }}
+    >
+        <Link to="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <SchoolIcon fontSize="large" sx={{ mr: 1 }} />
+                Orient MADA
+            </Box>
+        </Link>
+    </Typography>
     const handleLogout = () => {
         localStorage.removeItem('jwtToken');
         localStorage.removeItem('user_info');

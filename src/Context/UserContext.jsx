@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
 
       // Chargement des favoris
       axios
-        .get(`http://localhost:8000/api/favorites`, {
+        .get(`/api/favorites`, {
           params: { user_id: connectedUser.id },
         })
         .then((response) => {
@@ -29,11 +29,11 @@ export const UserProvider = ({ children }) => {
       // Chargement du profil utilisateur si l'id existe
       if (connectedUser.user_profils_id_id) {
         axios
-          .get(`http://localhost:8000/api/users_profils`, {
+          .get(`/api/users_profils`, {
             params: { user_profils_id_id: connectedUser.user_profils_id_id },
           })
           .then((response) => {
-            // On récupère le premier élément dans member (tableau)
+            // le premier élément dans member (tableau)
             const profils = response.data;
             const firstProfil =
               profils.member && profils.member.length > 0 ? profils.member[0] : null;

@@ -63,8 +63,9 @@ function University() {
   return (
     <Box
       sx={{
-        maxWidth: "95%",
+        maxWidth: "99%",
         margin: "0px auto",
+        // maxHeight: "90vh",
         padding: 5,
         background: "white",
         // borderRadius: 3,
