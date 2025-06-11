@@ -53,6 +53,7 @@ function Slidebar() {
     const handleMenuClose = () => setAnchorEl(null);
 
     const handleLogout = () => {
+        localStorage.removeItem('jwtToken');
         localStorage.removeItem('user_info');
         navigate('/login');
     };
@@ -104,7 +105,7 @@ function Slidebar() {
                             </IconButton>
                         </Box>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                            <MenuItem onClick={() => { handleMenuClose(); navigate('/profil'); }}>Modifier le profil</MenuItem>
+                            <MenuItem onClick={() => { handleMenuClose(); navigate('/home/profil'); }}>Modifier le profil</MenuItem>
                             <MenuItem onClick={() => { handleMenuClose(); navigate('/messages'); }}>Messages</MenuItem>
                         </Menu>
                     </Box>

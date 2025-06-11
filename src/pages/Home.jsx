@@ -18,7 +18,7 @@ function Home() {
     >
       {/* Zone centrale */}
       <Grid
-        item
+        // item
         component={Box}
         sx={{
           // backgroundColor: '#F5F7FB',
@@ -44,7 +44,7 @@ function Home() {
 
       {/* Zone de droite */}
       <Grid
-        item
+        // item
         component={Box}
         sx={{
           display: 'flex',

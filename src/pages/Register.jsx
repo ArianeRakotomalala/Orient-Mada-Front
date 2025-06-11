@@ -17,14 +17,7 @@ function Register() {
             setMessage("Les mots de passe ne correspondent pas.");
             return;
             }
-            console.log('Données envoyées:', {
-                email,
-                password: plainPassword,
-                telephone: phone,
-                role:"ROLE_USER"
-                
-            });
-
+           
             try { const response = await axios.post(
                 '/api/users',
                     {

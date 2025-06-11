@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import PostCard from "./PostCard";
 import { Typography } from "@mui/material";
 
@@ -6,28 +7,28 @@ function Feed() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-  fetch("/api/institutions")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Réponse de l'API institutions :", data);
-      const institutions = data.member || [];
+    axios
+      .get("/api/institutions")
+      .then((response) => {
+        const institutions = response.data.member || [];
 
-      const transformed = institutions.map((inst) => ({
-        id: inst.id,
-        title: inst.institution_name,
-        description: inst.history || "Pas de description fournie.",
-        ville: inst.location || "Ville inconnue",
-        region: inst.region || "Région inconnue",
-        srcimage: `https://i.pinimg.com/736x/0f/41/48/0f41481afda9b19fb8b9ba68bcb38b07.jpg`,
-        university: inst.institution_name,
-      }));
+        const transformed = institutions.map((inst) => ({
+          id: inst.id,
+          title: inst.institution_name,
+          description: inst.history || "Pas de description fournie.",
+          ville: inst.location || "Ville inconnue",
+          region: inst.region || "Région inconnue",
+          srcimage:
+            "https://i.pinimg.com/736x/0f/41/48/0f41481afda9b19fb8b9ba68bcb38b07.jpg",
+          university: inst.institution_name,
+        }));
 
-      setPosts(transformed);
-    })
-    .catch((err) =>
-      console.error("Erreur lors du fetch des institutions :", err)
-    );
-}, []);
+        setPosts(transformed);
+      })
+      .catch((err) => {
+        console.error("Erreur lors du fetch des institutions :", err);
+      });
+  }, []);
 
   return (
     <>

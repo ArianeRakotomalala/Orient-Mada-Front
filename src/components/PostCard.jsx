@@ -13,7 +13,6 @@ import DialogFavoris from "./DialogFavoris";
 
 function PostCard({ id, description, ville, srcimage, university, collections = [], loadingCollections = false }) {
     const { favoris, ajouterFavori, supprimerFavori } = useFavoris();
-    console.log("favoris:", favoris); 
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [openDialog, setOpenDialog] = useState(false);

@@ -40,11 +40,7 @@ function Login() {
             </Typography>
             
           )}
-          {/* {message && (
-                <Typography color={message.includes('réussie') ? 'green' : 'red'} sx={{ mt: 2 }}>
-                {message}
-                </Typography>
-          )} */}
+
             <form onSubmit={handleSubmit} >
                 <Formulaire
                   id="email"

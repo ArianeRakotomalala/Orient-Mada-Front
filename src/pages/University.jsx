@@ -35,7 +35,6 @@ function University() {
     const fetchUniversities = async () => {
       try {
         const response = await axios.get("/api/institutions");
-        console.log("Réponse API institutions:", response.data);
         const data = response.data.member || [];
         setUniversities(Array.isArray(data) ? data : []);
       } catch (error) {

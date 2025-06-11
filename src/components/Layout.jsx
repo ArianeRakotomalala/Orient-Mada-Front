@@ -7,7 +7,7 @@ function Layout() {
     return (
         <Grid 
             container
-            component="Box"
+            component={Box}
             sx={{ 
                 display:'flex',
                 flexDirection:'row',
@@ -17,7 +17,7 @@ function Layout() {
                 <Grid
                     component={Paper}
                     elevation={2}
-                    md={4}
+                    // md={4}
                     sx={{
                         // backgroundColor: 'blue',
                         height: {
