@@ -5,7 +5,6 @@ import {
   Box,
   Typography,
   IconButton,
-  Paper,
   Stack,
   TextField,
   Select,
@@ -13,10 +12,15 @@ import {
   InputLabel,
   FormControl,
   Button,
+  Card,
+  CardContent,
+  Divider,
 } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { UserContext } from "../Context/UserContext";
-import { Phone, Email, LocationOn, Cake, Person, Interests } from "@mui/icons-material";
+import { DataContext } from "../Context/DataContext";
+import { Phone, Email, LocationOn, Cake, Person, Interests, Favorite } from "@mui/icons-material";
+import axios from "axios";
 
 function stringAvatar(name) {
   return {
@@ -25,7 +29,8 @@ function stringAvatar(name) {
 }
 
 export default function Profil() {
-  const { user, userProfils } = useContext(UserContext);
+  const { user, userProfils, favoris } = useContext(UserContext);
+  const { institutions } = useContext(DataContext);
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -36,6 +41,7 @@ export default function Profil() {
     adresse: "",
     hobbies: "",
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -52,16 +58,27 @@ export default function Profil() {
     }
   }, [user, userProfils]);
 
-  // Affichage pendant chargement ou si données non dispo
-  if (!user ) {
+  const getInstitutionName = (institutionUrl) => {
+    if (!institutionUrl || !institutions?.member) return "Institution non trouvée";
+    const institution = institutions.member.find(inst => inst['@id'] === institutionUrl);
+    return institution?.name || "Institution non trouvée";
+  };
+
+  useEffect(() => {
+    if (favoris?.member) {
+      setLoading(false);
+    }
+  }, [favoris]);
+
+  if (!user) {
     return (
       <Box
         sx={{
-          minHeight: "90vh",
+          height: "100vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          background: "#f5f6fa",
+          bgcolor: "#fff",
         }}
       >
         <Typography variant="h6">Chargement du profil...</Typography>
@@ -75,125 +92,104 @@ export default function Profil() {
 
   const handleSubmit = () => {
     console.log("Données sauvegardées :", formData);
-    ///////////////////////////////////////////////
-    // Appel API ou mise à jour ici////////////////
-    ///////////////////////////////////////////////
   };
 
   return (
     <Box
       sx={{
-        
+        height: "100vh",
+        bgcolor: "#fff",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #e0e7ff 0%, #f5f6fa 100%)",
-        py: 4,
+        gap: 4,
+        p: 4,
       }}
     >
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={4}
-        width="100%"
-        maxWidth="1100px"
-        sx={{ boxShadow: 6, borderRadius: 4, background: "#fff", p: { xs: 2, md: 4 } }}
+      {/* Section Profil */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+        }}
       >
-        {/* Formulaire Profil */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, md: 4 },
-            flex: 1,
-            background: "transparent",
-            boxShadow: "none",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Box sx={{ position: "relative", mb: 2 }}>
+        <Box sx={{ maxWidth: "600px", mx: "auto" }}>
+          <Box sx={{ position: "relative", mb: 4, display: "flex", justifyContent: "center" }}>
             <Avatar
               {...stringAvatar(formData.email)}
               sx={{
-                width: 130,
-                height: 130,
-                background: "linear-gradient(135deg, #b993d6 0%, #8ca6db 100%)",
-                fontSize: 48,
-                boxShadow: 4,
-                border: "4px solid #fff",
+                width: 140,
+                height: 140,
+                bgcolor: "#1976d2",
+                fontSize: 56,
               }}
             />
             <IconButton
               sx={{
                 position: "absolute",
-                bottom: 8,
-                right: 8,
+                bottom: 0,
+                right: "calc(50% - 110px)",
                 bgcolor: "#fff",
-                boxShadow: 2,
-                border: "2px solid #e0e7ff",
-                "&:hover": { bgcolor: "#e0e7ff" },
-                zIndex: 1,
+                boxShadow: 1,
+                "&:hover": { bgcolor: "#f5f5f5" },
               }}
-              size="medium"
-              aria-label="Changer la photo de profil"
+              size="small"
               component="label"
             >
-              <CameraAltIcon fontSize="medium" />
+              <CameraAltIcon fontSize="small" />
               <input hidden accept="image/*" type="file" />
             </IconButton>
           </Box>
 
-          <Typography variant="h5" fontWeight={700} mb={2} color="primary">
+          <Typography variant="h5" fontWeight={500} mb={4} color="text.primary" textAlign="center">
             Mon Profil
           </Typography>
 
-          <Stack spacing={2} width="100%" maxWidth="400px">
+          <Stack spacing={2}>
             <TextField
               label="Nom"
               value={formData.nom}
-              placeholder="Votre nom"
               onChange={handleChange("nom")}
               InputProps={{
-                startAdornment: <Person sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <Person sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
             <TextField
               label="Prénom"
               value={formData.prenom}
               onChange={handleChange("prenom")}
               InputProps={{
-                startAdornment: <Person sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <Person sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
             <TextField
               label="Email"
               value={formData.email}
               onChange={handleChange("email")}
               InputProps={{
-                startAdornment: <Email sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <Email sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
             <TextField
               label="Téléphone"
               value={formData.telephone}
               onChange={handleChange("telephone")}
               InputProps={{
-                startAdornment: <Phone sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <Phone sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
-            <FormControl fullWidth sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}>
+            <FormControl fullWidth>
               <InputLabel id="serie-label">Série</InputLabel>
               <Select
                 labelId="serie-label"
@@ -215,97 +211,123 @@ export default function Profil() {
               onChange={handleChange("date_naissance")}
               InputLabelProps={{ shrink: true }}
               InputProps={{
-                startAdornment: <Cake sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <Cake sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
             <TextField
               label="Adresse"
               value={formData.adresse}
               onChange={handleChange("adresse")}
               InputProps={{
-                startAdornment: <LocationOn sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <LocationOn sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
             <TextField
               label="Hobbies"
               value={formData.hobbies}
               onChange={handleChange("hobbies")}
               InputProps={{
-                startAdornment: <Interests sx={{ mr: 1, color: "primary.main" }} />,
+                startAdornment: <Interests sx={{ mr: 1, color: "action.active" }} />,
               }}
               variant="outlined"
               fullWidth
-              sx={{ bgcolor: "#f3f6fd", borderRadius: 2 }}
             />
             <Box textAlign="center" mt={2}>
               <Button
                 variant="contained"
-                color="primary"
                 onClick={handleSubmit}
                 size="large"
                 sx={{
-                  px: 5,
-                  py: 1.5,
-                  borderRadius: 3,
-                  fontWeight: 700,
-                  fontSize: "1.1rem",
-                  background: "linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)",
-                  boxShadow: 3,
-                  "&:hover": {
-                    background: "linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)",
-                    boxShadow: 6,
-                  },
+                  px: 4,
+                  py: 1,
+                  borderRadius: 1,
+                  textTransform: "none",
+                  fontSize: "1rem",
                 }}
               >
                 Enregistrer
               </Button>
             </Box>
           </Stack>
-        </Paper>
+        </Box>
+      </Box>
 
-        {/* Colonne de droite pour autres infos (favoris, stats, etc.) */}
-        <Paper
-          sx={{
-            flex: 1,
-            p: { xs: 2, md: 4 },
-            borderRadius: 4,
-            bgcolor: "#f3f6fd",
-            boxShadow: 3,
-            minHeight: 400,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-start",
-          }}
-        >
-          <Typography variant="h6" fontWeight={700} gutterBottom color="primary">
-            Vos favoris et autres informations
-          </Typography>
-          {/* Ajoute ici tes composants favoris, stats, etc. */}
+      {/* Section Favoris */}
+      <Box
+        sx={{
+          width: "300px",
+          overflowY: "auto",
+          borderLeft: "1px solid #eee",
+          pl: 4,
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            
+            background: "#ddd",
+            borderRadius: "3px",
+          },
+        }}
+      >
+        <Typography variant="h6" fontWeight={500} mb={3} color="text.primary">
+          Vos favoris
+        </Typography>
+        {loading ? (
+          <Box sx={{ p: 3 }}>
+            <Skeleton variant="rectangular" height={100} sx={{ mb: 2 }} />
+            <Skeleton variant="rectangular" height={100} />
+          </Box>
+        ) : favoris?.member?.length > 0 ? (
+          (() => {
+            // Grouper les favoris par collection_name
+            const grouped = {};
+            favoris.member.forEach(fav => {
+              if (!grouped[fav.collection_name]) grouped[fav.collection_name] = [];
+              grouped[fav.collection_name].push(fav);
+            });
+            // Afficher chaque groupe
+            return Object.entries(grouped).map(([collection, favs], idx) => (
+              <Card key={idx} sx={{ bgcolor: '#fafafa', mb: 2 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Favorite sx={{ color: '#ff4081', mr: 1 }} />
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      {collection}
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Stack spacing={1}>
+                    {favs.map((fav, i) => (
+                      <Typography key={i} variant="body2" color="text.secondary">
+                        {getInstitutionName(fav.institution)}
+                      </Typography>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            ));
+          })()
+        ) : (
           <Box
             sx={{
-              mt: 2,
-              p: 2,
-              borderRadius: 3,
-              bgcolor: "#fff",
-              boxShadow: 1,
-              minHeight: 120,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#b0b0b0",
+              p: 3,
+              borderRadius: 1,
+              bgcolor: "#fafafa",
+              color: "text.secondary",
               fontStyle: "italic",
             }}
           >
-            Aucune information à afficher pour le moment.
+            Aucun favori pour le moment.
           </Box>
-        </Paper>
-      </Stack>
+        )}
+      </Box>
     </Box>
   );
 }

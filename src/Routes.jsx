@@ -8,7 +8,9 @@ import Feed from "./components/Feed";
 import Essai from "./pages/Orientation";
 import Story from "./components/StoryViewer";
 import University from "./pages/university";
+import UniversityDetails from "./pages/UniversityDetails";
 import Profil from "./pages/Profil";
+
 function AppRoute() {
     return (
     <Routes>
@@ -18,8 +20,10 @@ function AppRoute() {
         <Route path="/home" element={<Layout/>}> 
             <Route index element={<Home/>} />
             <Route path="university" element={<University />} />
+            <Route path="university/:id" element={<UniversityDetails />} />
             <Route path="orientation" element={<Essai />} />
             <Route path="profil" element={<Profil/>}/>
+            <Route path="post/:i" element={<PostCard/>}/>
         </Route>
             
     </Routes>

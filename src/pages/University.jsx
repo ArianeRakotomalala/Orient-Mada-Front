@@ -1,34 +1,55 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import SchoolIcon from '@mui/icons-material/School';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import {
   Box,
   Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
+  Grid,
+  Card,
+  CardContent,
+  CardMedia,
   Chip,
   InputBase,
   Menu,
-  MenuItem
+  MenuItem,
+  Container,
+  Select,
+  FormControl,
+  InputLabel,
+  Stack
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import Avatar from '@mui/material/Avatar';
-function University() {
-  const [universities, setUniversities] = useState([]);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [sortBy, setSortBy] = useState("Nom");
-  const [search, setSearch] = useState("");
+import { useNavigate } from 'react-router-dom';
 
-  const handleSortClick = (event) => setAnchorEl(event.currentTarget);
-  const handleSortClose = (value) => {
-    if (value) setSortBy(value);
-    setAnchorEl(null);
+function University() {
+  const navigate = useNavigate();
+  const [universities, setUniversities] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedFormation, setSelectedFormation] = useState("");
+
+  const regions = [
+    "Antananarivo",
+    "Toamasina",
+    "Mahajanga",
+    "Fianarantsoa",
+    "Antsiranana",
+    "Toliara"
+  ];
+
+  const formations = [
+    "Informatique",
+    "Médecine",
+    "Droit",
+    "Commerce",
+    "Ingénierie",
+    "Agriculture"
+  ];
+
+  const handleViewDetails = (id) => {
+    navigate(`/home/university/${id}`);
   };
 
   useEffect(() => {
@@ -45,131 +66,252 @@ function University() {
     fetchUniversities();
   }, []);
 
-  // Filtrage et tri
   const filtered = universities
     .filter((u) =>
       (u.institution_name || "").toLowerCase().includes(search.toLowerCase()) ||
       (u.localisation || "").toLowerCase().includes(search.toLowerCase()) ||
       (u.region || "").toLowerCase().includes(search.toLowerCase())
     )
-    .sort((a, b) => {
-      if (sortBy === "Nom") return (a.institution_name || "").localeCompare(b.institution_name || "");
-      if (sortBy === "Type") return (a.type || "").localeCompare(b.type || "");
-      if (sortBy === "Localisation") return (a.localisation || "").localeCompare(b.localisation || "");
-      if (sortBy === "Région") return (a.region || "").localeCompare(b.region || "");
-      return 0;
-    });
+    .filter((u) => !selectedRegion || u.region === selectedRegion)
+    .filter((u) => !selectedFormation || u.formation === selectedFormation);
 
   return (
     <Box
       sx={{
-        maxWidth: "99%",
-        margin: "0px auto",
-        // maxHeight: "90vh",
-        padding: 5,
-        background: "white",
-        // borderRadius: 3,
-        // boxShadow: 1,
+        minHeight: "100vh",
+        background: "#f5f5f5",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto",
+        py: 4
       }}
     >
-      <Typography variant="h4" fontWeight={700} mb={3} color="primary" textAlign="center">
-        Liste des Universités
-      </Typography>
-      {/* Barre de recherche et tri */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, gap: 2, flexWrap: "wrap" }}>
-        <Box sx={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 2, px: 2, boxShadow: 1 }}>
-          <SearchIcon color="action" />
-          <InputBase
-            placeholder="Rechercher…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            sx={{ ml: 1, flex: 1 }}
-          />
-        </Box>
-        <Box>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSortClick}
-            sx={{ textTransform: "none", fontWeight: 600 }}
-          >
-            Trier par : {sortBy}
-          </Button>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => handleSortClose()}>
-            <MenuItem onClick={() => handleSortClose("Nom")}>Nom</MenuItem>
-            <MenuItem onClick={() => handleSortClose("Type")}>Type</MenuItem>
-            <MenuItem onClick={() => handleSortClose("Localisation")}>Localisation</MenuItem>
-            <MenuItem onClick={() => handleSortClose("Région")}>Région</MenuItem>
-          </Menu>
-        </Box>
-      </Box>
-      <TableContainer
-        component={Paper}
-        sx={{
-          maxHeight: 420,
-          borderRadius: 2,
-          background: "#fff",
-          overflowY: "auto",
-        }}
-      >
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              <TableCell><b>Nom de l'institution</b></TableCell>
-              <TableCell><b>Type</b></TableCell>
-              <TableCell><b>Localisation</b></TableCell>
-              <TableCell><b>Région</b></TableCell>
-              <TableCell align="center"><b>Action</b></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((uni) => (
-              <TableRow
-                key={uni.id}
-                hover
-                sx={{
-                  "&:hover": { background: "#e3f2fd" },
-                }}
-              >
-                <TableCell>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Avatar
-                      src={uni.photo || ""}
-                      alt={uni.institution_name}
-                      sx={{ bgcolor: "#1976d2", width: 36, height: 36 }}
-                    >
-                      {!uni.photo && <SchoolIcon />}
-                    </Avatar>
-                    <Typography fontWeight={600} color="primary">
-                      {uni.institution_name}
-                    </Typography>
-                  </Box>
-                </TableCell>
+      <Container maxWidth="xl">
+        <Typography variant="h4" fontWeight={700}  textAlign="center" mb={4}>
+          Les universités de Madagascar
+        </Typography>
 
-                <TableCell>
-                  <Chip label={uni.type} color={uni.type === "Publique" ? "success" : "secondary"} size="small" />
-                </TableCell>
-                <TableCell>
-                  <Chip label={uni.location || "-"} color="info" size="small" />
-                </TableCell>
-                <TableCell>
-                  <Chip label={uni.region || "-"} color="default" size="small" />
-                </TableCell>
-                <TableCell align="center">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    onClick={() => alert(`Détail de ${uni.institution_name}`)}
+        <Stack spacing={3} sx={{ mb: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'white',
+                borderRadius: 2,
+                px: 2,
+                boxShadow: 1,
+                minWidth: { xs: '100%', sm: 280 },
+                flex: 1,
+                height: 48,
+                mb: { xs: 1, sm: 0 },
+              }}
+            >
+              <SearchIcon color="action" />
+              <InputBase
+                placeholder="Rechercher une université..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                sx={{ ml: 1, flex: 1, fontSize: '1rem' }}
+              />
+            </Box>
+            <FormControl
+              sx={{
+                minWidth: 180,
+                background: 'white',
+                borderRadius: 2,
+                boxShadow: 1,
+                height: 48,
+                justifyContent: 'center',
+              }}
+              size="medium"
+            >
+              <InputLabel>Région</InputLabel>
+              <Select
+                value={selectedRegion}
+                label="Région"
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                sx={{ height: 48 }}
+              >
+                <MenuItem value="">Toutes les régions</MenuItem>
+                {regions.map((region) => (
+                  <MenuItem key={region} value={region}>{region}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl
+              sx={{
+                minWidth: 180,
+                background: 'white',
+                borderRadius: 2,
+                boxShadow: 1,
+                height: 48,
+                justifyContent: 'center',
+              }}
+              size="medium"
+            >
+              <InputLabel>Formation</InputLabel>
+              <Select
+                value={selectedFormation}
+                label="Formation"
+                onChange={(e) => setSelectedFormation(e.target.value)}
+                sx={{ height: 48 }}
+              >
+                <MenuItem value="">Toutes les formations</MenuItem>
+                {formations.map((formation) => (
+                  <MenuItem key={formation} value={formation}>{formation}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Stack>
+
+        <Grid container spacing={3}>
+          {filtered.map((uni) => (
+            <Grid item xs={12} md={4} key={uni.id} sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Card
+                sx={{
+                  width: 340,
+                  minHeight: 380,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 6
+                  }
+                }}
+                onClick={() => handleViewDetails(uni.id)}
+              >
+                <Box
+                  sx={{
+                    height: 140,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: '#f5f5f5',
+                    textAlign: 'justify'
+                  }}
+                >
+                  {uni.photo ? (
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={uni.photo}
+                      alt={uni.institution_name}
+                      sx={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <SchoolIcon sx={{ fontSize: 80, color: '#1976d2' }} />
+                  )}
+                </Box>
+                <CardContent
+                  sx={{
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    p: 2,
+                    minHeight: 140,
+                    maxHeight: 200,
+                    overflow: 'hidden',
+                    textAlign: 'justify',
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    component="h2"
+                    fontWeight={700}
+                    sx={{
+                      fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' },
+                      wordBreak: 'break-word',
+                      width: '100%',
+                      mb: 1,
+                      lineHeight: 1.2,
+                      textAlign: 'left',
+                      minHeight: '2.4em',
+                      maxHeight: '3.6em',
+                      overflow: 'hidden',
+                      display: 'block'
+                    }}
+                    title={uni.institution_name}
                   >
-                    Voir le détail
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                    {uni.institution_name}
+                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    gap: 1.5
+                  }}>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}>
+                        Type : {(() => {
+                          const typeClean = (uni.type || "").trim().toLowerCase();
+                          const isPublic = typeClean === "publique" || typeClean === "public";
+                          return (
+                            <Typography
+                              component="span"
+                              sx={{
+                                color: isPublic ? "#2e7d32" : "#1976d2",
+                                fontWeight: 600,
+                                ml: 0.5
+                              }}
+                            >
+                              {uni.type}
+                            </Typography>
+                          );
+                        })()}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
+                        sx={{
+                          wordBreak: 'break-word',
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          textAlign: 'justify',
+                        }}
+                        title={uni.region}
+                      >
+                        <TravelExploreIcon sx={{ fontSize: 18, mr: 0.5, color: '#ed6c02' }} />
+                        <span style={{ flex: 1 }}>{uni.region}</span>
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
+                        sx={{
+                          wordBreak: 'break-word',
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          textAlign: 'justify',
+                        }}
+                        title={uni.location}
+                      >
+                        <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: '#1976d2' }} />
+                        <span style={{ flex: 1 }}>{uni.location}</span>
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
     </Box>
   );
 }

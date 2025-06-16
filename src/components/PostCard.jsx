@@ -10,8 +10,10 @@ import ShareIcon from '@mui/icons-material/Share';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolIcon from '@mui/icons-material/School';
 import DialogFavoris from "./DialogFavoris";
+import { useNavigate } from 'react-router-dom';
 
 function PostCard({ id, description, ville, srcimage, university, collections = [], loadingCollections = false }) {
+    const navigate = useNavigate();
     const { favoris, ajouterFavori, supprimerFavori } = useFavoris();
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -37,7 +39,6 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
               return false;
             });
             if (fav) {
-                // Extraire l'id numérique depuis fav['@id']
                 const favoriId = fav['@id'] ? fav['@id'].split('/').pop() : undefined;
                 supprimerFavori(favoriId);
                 setSnackbarMessage("Retiré des favoris !");
@@ -48,15 +49,18 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
         }
     };
 
+    const handleViewUniversity = () => {
+        navigate(`/home/university/${id}`);
+    };
   
-   const handleAddToFavoris = (collectionName) => {
+    const handleAddToFavoris = (collectionName) => {
         const userInfo = JSON.parse(localStorage.getItem('user_info'));
         const userId = userInfo?.id;
         if (!userId) {
             alert("Utilisateur non connecté !");
             return;
         }
-        ajouterFavori(collectionName, id, userId); // `id` = institution_id
+        ajouterFavori(collectionName, id, userId);
         setSnackbarMessage("Ajouté aux favoris !");
         setOpenSnackbar(true);
     };
@@ -103,6 +107,7 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
                     <Button
                         variant="contained"
                         startIcon={<SchoolIcon />}
+                        onClick={handleViewUniversity}
                         sx={{
                             backgroundColor: 'white',
                             color: "black",

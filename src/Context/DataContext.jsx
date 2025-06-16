@@ -16,6 +16,7 @@ export const DataProvider = ({ children }) => {
           axios.get("/api/institutions"),
           axios.get("/api/courses"),
         ]);
+        console.log("Institutions response:", institutionsRes.data);
         setInstitutions(institutionsRes.data);
         setCourses(coursesRes.data);
       } catch (error) {

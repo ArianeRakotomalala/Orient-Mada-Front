@@ -21,6 +21,7 @@ export const UserProvider = ({ children }) => {
         })
         .then((response) => {
           setFavoris(response.data);
+          console.log("Favoris:", response.data);
         })
         .catch((error) => {
           console.error("Erreur lors du chargement des favoris :", error);
