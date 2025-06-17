@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 import {
     Avatar,
     Button,
@@ -19,7 +19,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import { useParams } from 'react-router-dom';
-import { Link } from "react-router-dom";
 
 
 const navLinkStyle = ({ isActive }) => ({
@@ -53,18 +52,6 @@ function Slidebar() {
     const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
 
-    <Typography
-        component="h1"
-        variant="h5"
-        sx={{ mb: 4, mt: 2, fontWeight: 'bold' }}
-    >
-        <Link to="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <SchoolIcon fontSize="large" sx={{ mr: 1 }} />
-                Orient MADA
-            </Box>
-        </Link>
-    </Typography>
     const handleLogout = () => {
         localStorage.removeItem('jwtToken');
         localStorage.removeItem('user_info');
@@ -86,7 +73,6 @@ function Slidebar() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                fontFamily:'"Roboto", "Helvetica", "Arial", sans-serif'
             }}
         >
             <Box>
@@ -95,21 +81,54 @@ function Slidebar() {
                     variant="h5"
                     sx={{ mb: 4, mt: 2, fontWeight: 'bold' }}
                 >
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <SchoolIcon fontSize="large" sx={{ mr: 1 }} />
-                        Orient MADA
-                    </Box>
+                    <Link to="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <SchoolIcon fontSize="large" sx={{ mr: 1 }} />
+                            Orient MADA
+                        </Box>
+                    </Link>
                 </Typography>
 
                 {user && (
                     <Box mb={3}>
                         <Box display="flex" alignItems="center" gap={2} mb={1}>
                             <Avatar sx={{ width: 48, height: 48 }}>{initial}</Avatar>
-                            <Box display="flex" flexDirection="column" justifyContent="center">
-                                <Typography variant="body1" fontWeight="bold" fontSize={14}>
+                            <Box display="flex" flexDirection="column" justifyContent="center" sx={{ minWidth: 0 }}>
+                                <Typography
+                                    variant="body1"
+                                    fontWeight="bold"
+                                    fontSize={14}
+                                    sx={{
+                                        maxWidth: 140,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        wordBreak: 'break-all',
+                                        '@media (max-width:600px)': {
+                                            maxWidth: 80,
+                                            fontSize: 12,
+                                        }
+                                    }}
+                                    title={user.email}
+                                >
                                     {user.email}
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                        maxWidth: 140,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        wordBreak: 'break-all',
+                                        '@media (max-width:600px)': {
+                                            maxWidth: 80,
+                                            fontSize: 11,
+                                        }
+                                    }}
+                                    title={user.telephone}
+                                >
                                     {user.telephone}
                                 </Typography>
                             </Box>
@@ -133,10 +152,10 @@ function Slidebar() {
                     <NavLink to="/home/university" style={navLinkStyle}>
                         <SchoolIcon sx={{ mr: 1 }} /> Universités
                     </NavLink>
-                    <NavLink to="/formation" style={navLinkStyle}>
+                    <NavLink to="/home/formation" style={navLinkStyle}>
                         <WorkIcon sx={{ mr: 1 }} /> Formation
                     </NavLink>
-                    <NavLink to="/event" style={navLinkStyle}>
+                    <NavLink to="home/ event" style={navLinkStyle}>
                         <EventIcon sx={{ mr: 1 }} /> Événement
                     </NavLink>
                 </nav>

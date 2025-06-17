@@ -1,28 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  TextField, Select, MenuItem, InputLabel, FormControl, CircularProgress, Box
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography
 } from '@mui/material';
-import { useFavoris } from "../Context/FavoriteContext.jsx";
+import { UserContext } from "../Context/UserContext";
 
 export default function DialogFavoris({
-  ouvert,
-  onFermer,
-  onAjouter,
+  open,
+  onClose,
+  onAddToCollection,
+  collections = [],
   loadingCollections = false
 }) {
-  const { favoris } = useFavoris();
-
-  // Récupère l'ID utilisateur connecté
-  const userInfo = JSON.parse(localStorage.getItem('user_info'));
-  const userId = userInfo?.id;
+  const { favoris, loadingFavoris, user } = useContext(UserContext);
+  const [selectedCollection, setSelectedCollection] = useState('');
+  const [newCollectionName, setNewCollectionName] = useState('');
 
   // Filtre les favoris pour ne garder que ceux de l'utilisateur connecté
   const favorisUtilisateur = favoris.filter(fav => {
+    if (!user?.id) return false;
     if (typeof fav.user === "string") {
-      return fav.user.endsWith(`/${userId}`);
+      return fav.user.endsWith(`/${user.id}`);
     } else if (fav.user?.id) {
-      return fav.user.id === userId;
+      return fav.user.id === user.id;
     }
     return false;
   });
@@ -30,64 +41,67 @@ export default function DialogFavoris({
   // Extraire tous les noms de collections uniques depuis les favoris de l'utilisateur
   const collectionNames = [...new Set(favorisUtilisateur.map(fav => fav.collection_name).filter(Boolean))];
 
-  const [nouvelleCollection, setNouvelleCollection] = useState('');
-  const [collectionSelectionnee, setCollectionSelectionnee] = useState('');
-
-  useEffect(() => {
-    if (collectionNames.length > 0) {
-      setCollectionSelectionnee(collectionNames[0]);
-    } else {
-      setCollectionSelectionnee('');
+  const handleSubmit = () => {
+    const collectionName = newCollectionName.trim() || selectedCollection;
+    if (collectionName) {
+      onAddToCollection(collectionName);
+      onClose();
+      setSelectedCollection('');
+      setNewCollectionName('');
     }
-  }, [collectionNames]);
-
-  const handleAjouter = () => {
-    const collectionFinale = nouvelleCollection.trim() || collectionSelectionnee;
-    if (!collectionFinale) return alert("Merci de choisir ou créer une collection.");
-    onAjouter(collectionFinale);
   };
 
   return (
-    <Dialog open={ouvert} onClose={onFermer} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose}>
       <DialogTitle>Ajouter aux favoris</DialogTitle>
       <DialogContent>
-        {loadingCollections ? (
+        {loadingFavoris ? (
+          <Box display="flex" justifyContent="center" p={3}>
+            <CircularProgress />
+          </Box>
+        ) : loadingCollections ? (
           <Box display="flex" justifyContent="center" alignItems="center" minHeight={80}>
             <CircularProgress />
           </Box>
         ) : (
-          <>
-            <FormControl fullWidth margin="normal" disabled={nouvelleCollection.trim().length > 0}>
-              <InputLabel id="select-collection-label">Choisir une collection</InputLabel>
+          <Box sx={{ minWidth: 300, mt: 2 }}>
+            <FormControl fullWidth margin="normal" disabled={newCollectionName.trim().length > 0}>
+              <InputLabel>Choisir une collection</InputLabel>
               <Select
-                labelId="select-collection-label"
-                value={collectionSelectionnee}
+                value={selectedCollection}
                 label="Choisir une collection"
-                onChange={e => setCollectionSelectionnee(e.target.value)}
+                onChange={(e) => setSelectedCollection(e.target.value)}
               >
-                {collectionNames.map(name => (
-                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                {collectionNames.map((name) => (
+                  <MenuItem key={name} value={name}>
+                    {name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
+
+            <Box sx={{ textAlign: 'center', my: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Ou
+              </Typography>
+            </Box>
+
             <TextField
               fullWidth
               margin="normal"
-              label="Ou créer une nouvelle collection"
+              label="Créer une nouvelle collection"
               placeholder="Nom nouvelle collection"
-              value={nouvelleCollection}
-              onChange={e => setNouvelleCollection(e.target.value)}
+              value={newCollectionName}
+              onChange={(e) => setNewCollectionName(e.target.value)}
             />
-          </>
+          </Box>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onFermer} color="secondary">Annuler</Button>
-        <Button
-          onClick={handleAjouter}
-          variant="contained"
-          color="primary"
-          disabled={loadingCollections || (!nouvelleCollection.trim() && !collectionSelectionnee)}
+        <Button onClick={onClose}>Annuler</Button>
+        <Button 
+          onClick={handleSubmit}
+          disabled={!newCollectionName.trim() && !selectedCollection}
         >
           Ajouter
         </Button>

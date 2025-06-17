@@ -1,8 +1,9 @@
-import { useFavoris } from "../Context/FavoriteContext.jsx";
+import { useContext } from "react";
+import { UserContext } from "../Context/UserContext";
 import { useState } from "react";
 import {
     Card, CardHeader, CardMedia, CardContent, CardActions,
-    Avatar, IconButton, Typography, Box, Button, Snackbar
+    Avatar, IconButton, Typography, Box, Button, Snackbar, CircularProgress
 } from "@mui/material";
 import { red } from '@mui/material/colors';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -11,32 +12,44 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolIcon from '@mui/icons-material/School';
 import DialogFavoris from "./DialogFavoris";
 import { useNavigate } from 'react-router-dom';
+import Skeleton from '@mui/material/Skeleton';
 
-function PostCard({ id, description, ville, srcimage, university, collections = [], loadingCollections = false }) {
+// Fonction utilitaire pour obtenir la première lettre sans accent et en majuscule
+function getFirstLetterNoAccent(str) {
+    if (!str) return '';
+    return str[0]
+        .toLocaleUpperCase('fr-FR')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+function PostCard({ id, description, ville, srcimage, university, collections = [], loadingCollections = false, loading = false }) {
     const navigate = useNavigate();
-    const { favoris, ajouterFavori, supprimerFavori } = useFavoris();
+    const { favorisUtilisateur, ajouterFavori, supprimerFavori, loadingFavoris } = useContext(UserContext);
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [openDialog, setOpenDialog] = useState(false);
 
-    const isFavori = favoris.some(fav => {
-      if (typeof fav.institution === 'string') {
-        return fav.institution.endsWith(`/${id}`);
-      } else if (fav.institution?.id) {
-        return fav.institution.id === id;
-      }
-      return false;
+    // Vérifie si l'université est déjà dans les favoris
+    const isFavori = favorisUtilisateur.some(fav => {
+        if (typeof fav.institution === 'string') {
+            return fav.institution.endsWith(`/${id}`);
+        } else if (fav.institution?.id) {
+            return fav.institution.id === id;
+        }
+        return false;
     });
 
+    // Gère le clic sur le bouton favori
     const handleFavoriClick = () => {
-        if (isFavori) {  
-            const fav = favoris.find(fav => {
-              if (typeof fav.institution === 'string') {
-                return fav.institution.endsWith(`/${id}`);
-              } else if (fav.institution?.id) {
-                return fav.institution.id === id;
-              }
-              return false;
+        if (isFavori) {
+            const fav = favorisUtilisateur.find(fav => {
+                if (typeof fav.institution === 'string') {
+                    return fav.institution.endsWith(`/${id}`);
+                } else if (fav.institution?.id) {
+                    return fav.institution.id === id;
+                }
+                return false;
             });
             if (fav) {
                 const favoriId = fav['@id'] ? fav['@id'].split('/').pop() : undefined;
@@ -49,37 +62,50 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
         }
     };
 
+    // Redirige vers la page de l'université
     const handleViewUniversity = () => {
         navigate(`/home/university/${id}`);
     };
-  
+
+    // Ajoute l'université à une collection de favoris
     const handleAddToFavoris = (collectionName) => {
-        const userInfo = JSON.parse(localStorage.getItem('user_info'));
-        const userId = userInfo?.id;
-        if (!userId) {
-            alert("Utilisateur non connecté !");
-            return;
-        }
-        ajouterFavori(collectionName, id, userId);
+        ajouterFavori(collectionName, id);
         setSnackbarMessage("Ajouté aux favoris !");
         setOpenSnackbar(true);
     };
+
+    if (loading) {
+        return (
+            <Card sx={{ maxWidth: 600, margin: '20px auto', borderRadius: '10px' }}>
+                <CardHeader
+                    avatar={<Skeleton variant="circular" width={40} height={40} />}
+                    action={<Skeleton variant="circular" width={40} height={40} />}
+                    title={<Skeleton variant="text" width="60%" height={32} />}
+                    subheader={<Skeleton variant="text" width="40%" height={24} />}
+                />
+                <Skeleton variant="rectangular" height={194} />
+                <CardContent>
+                    <Skeleton variant="text" width="90%" height={24} />
+                    <Skeleton variant="text" width="80%" height={24} />
+                    <Skeleton variant="text" width="60%" height={24} />
+                </CardContent>
+                <CardActions>
+                    <Skeleton variant="rectangular" width={120} height={36} sx={{ borderRadius: 2 }} />
+                </CardActions>
+            </Card>
+        );
+    }
 
     return (
         <>
             <Card sx={{ maxWidth: 600, margin: '20px auto', borderRadius: '10px' }}>
                 <CardHeader
                     avatar={
-                        <Avatar sx={{ bgcolor: red[900], color: 'white' }} aria-label="university">
-                            {university?.charAt(0).toUpperCase()}
+                        <Avatar sx={{ bgcolor: red[500] }} aria-label="recipe">
+                            {university.charAt(0) || 'U'}
                         </Avatar>
                     }
-                    action={
-                        <IconButton aria-label="settings">
-                            <MoreVertIcon />
-                        </IconButton>
-                    }
-                    title={university}
+                    title={university }
                     subheader={ville}
                 />
                 <CardMedia
@@ -95,10 +121,14 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
                 </CardContent>
                 <CardActions disableSpacing>
                     <IconButton
-                        aria-label="add to favorites"
                         onClick={handleFavoriClick}
+                        disabled={loadingFavoris}
                     >
-                        <FavoriteIcon sx={{ color: isFavori ? red[500] : 'inherit' }} />
+                        {loadingFavoris ? (
+                            <CircularProgress size={24} />
+                        ) : (
+                            <FavoriteIcon sx={{ color: isFavori ? red[500] : 'inherit' }} />
+                        )}
                     </IconButton>
                     <IconButton aria-label="share">
                         <ShareIcon />
@@ -106,45 +136,29 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
                     <Box sx={{ flexGrow: 1 }} />
                     <Button
                         variant="contained"
-                        startIcon={<SchoolIcon />}
-                        onClick={handleViewUniversity}
-                        sx={{
-                            backgroundColor: 'white',
-                            color: "black",
-                            borderRadius: "30px",
-                            textTransform: "none",
-                            fontWeight: "bold",
-                            px: 3,
-                            py: 1,
-                            '&:hover': {
-                                background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
-                                color: 'white',
-                            },
-                        }}
+                        color="primary"
+                        onClick={() => navigate(`/home/university/${id}`)}
                     >
                         Voir l'université
                     </Button>
                 </CardActions>
             </Card>
 
+            {/* Dialog pour ajouter aux favoris */}
             <DialogFavoris
-                ouvert={openDialog}
-                onFermer={() => setOpenDialog(false)}
-                onAjouter={(collectionName) => {
-                    handleAddToFavoris(collectionName);
-                    setOpenDialog(false);
-                }}
+                open={openDialog}
+                onClose={() => setOpenDialog(false)}
+                onAddToCollection={handleAddToFavoris}
                 collections={collections}
                 loadingCollections={loadingCollections}
             />
 
+            {/* Snackbar pour feedback utilisateur */}
             <Snackbar
                 open={openSnackbar}
-                autoHideDuration={2000}
+                autoHideDuration={3000}
                 onClose={() => setOpenSnackbar(false)}
                 message={snackbarMessage}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                sx={{color:"green"}}
             />
         </>
     );

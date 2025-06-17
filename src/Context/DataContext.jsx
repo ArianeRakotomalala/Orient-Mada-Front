@@ -16,9 +16,10 @@ export const DataProvider = ({ children }) => {
           axios.get("/api/institutions"),
           axios.get("/api/courses"),
         ]);
-        console.log("Institutions response:", institutionsRes.data);
+
+        console.log(coursesRes.data.member);
         setInstitutions(institutionsRes.data);
-        setCourses(coursesRes.data);
+        setCourses(coursesRes.data.member);
       } catch (error) {
         console.error("Erreur lors du chargement des données :", error);
       } finally {

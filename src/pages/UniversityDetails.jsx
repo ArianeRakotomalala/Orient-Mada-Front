@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -13,6 +13,7 @@ import { styled } from '@mui/material/styles';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { DataContext } from '../Context/DataContext'; // adapte le chemin si besoin
 
 // Fix pour les icônes Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -48,6 +49,7 @@ const UniversityDetails = () => {
     const [university, setUniversity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { courses } = useContext(DataContext); // adapte le nom si besoin
 
     useEffect(() => {
         const fetchUniversity = async () => {
@@ -92,6 +94,13 @@ const UniversityDetails = () => {
     // Coordonnées par défaut pour Antananarivo
     const defaultPosition = [-18.8792, 47.5079];
     const position = university.coordinates || defaultPosition;
+
+    const universityCourses = Array.isArray(courses)
+        ? courses.filter(course => {
+            const institutionId = course.institutions.split('/').pop();
+            return String(institutionId) === String(university.id);
+        })
+        : [];
 
     return (
         <Box sx={{ p: 2 }}>
@@ -148,16 +157,32 @@ const UniversityDetails = () => {
                                     Contact
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    Email: {university.email || "Non spécifié"}
+                                    Email: {university.contact || "Non spécifié"}
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Téléphone: {university.phone || "Non spécifié"}
-                                </Typography>
+                                
                             </Box>
                         </CardContent>
                     </StyledCard>
                 </Grid>
             </Grid>
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                    Formations proposées
+                </Typography>
+                {universityCourses.length > 0 ? (
+                    <ul>
+                        {universityCourses.map(course => (
+                            <li key={course.id}>
+                                <Typography variant="body1">{course.title}</Typography>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <Typography variant="body2" color="text.secondary">
+                        Aucune formation disponible pour cette université.
+                    </Typography>
+                )}
+            </Box>
         </Box>
     );
 };

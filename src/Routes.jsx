@@ -7,7 +7,8 @@ import PostCard from "./components/PostCard";
 import Feed from "./components/Feed";
 import Essai from "./pages/Orientation";
 import Story from "./components/StoryViewer";
-import University from "./pages/university";
+import University from "./pages/University";
+import Formation from "./pages/Formation";
 import UniversityDetails from "./pages/UniversityDetails";
 import Profil from "./pages/Profil";
 
@@ -22,6 +23,7 @@ function AppRoute() {
             <Route path="university" element={<University />} />
             <Route path="university/:id" element={<UniversityDetails />} />
             <Route path="orientation" element={<Essai />} />
+            <Route path="formation" element={<Formation />} />
             <Route path="profil" element={<Profil/>}/>
             <Route path="post/:i" element={<PostCard/>}/>
         </Route>

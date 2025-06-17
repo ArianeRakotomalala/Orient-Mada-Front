@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect, useContext } from "react";
+import { DataContext } from "../Context/DataContext";
 import SchoolIcon from '@mui/icons-material/School';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
@@ -22,13 +22,28 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from 'react-router-dom';
+import Skeleton from '@mui/material/Skeleton';
+import Rating from '@mui/material/Rating';
+import useDebounce from '../useDebounce';
 
 function University() {
   const navigate = useNavigate();
-  const [universities, setUniversities] = useState([]);
+  const { institutions, courses, loading } = useContext(DataContext);
+
   const [search, setSearch] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedFormation, setSelectedFormation] = useState("");
+  const [selectedCost, setSelectedCost] = useState("");
+
+  // Debounced values
+  const debouncedSearch = useDebounce(search, 400);
+  const debouncedRegion = useDebounce(selectedRegion, 400);
+  const debouncedFormation = useDebounce(selectedFormation, 400);
+  const debouncedCost = useDebounce(selectedCost, 400);
+
+  // Debug logs
+  console.log("Institutions:", institutions);
+  console.log("Courses:", courses);
 
   const regions = [
     "Antananarivo",
@@ -39,41 +54,110 @@ function University() {
     "Toliara"
   ];
 
-  const formations = [
-    "Informatique",
-    "Médecine",
-    "Droit",
-    "Commerce",
-    "Ingénierie",
-    "Agriculture"
-  ];
+  // Générer dynamiquement la liste des formations à partir de courses, en évitant les doublons et en regroupant les formations similaires
+  const getRoot = (name) => {
+    if (!name) return '';
+    return name;
+  };
+  const formationRoots = Array.from(
+    new Set(
+      (courses || [])
+        .map((c) => getRoot(c.title))
+        .filter(Boolean)
+    )
+  );
+  // Regrouper les intitulés originaux par racine pour affichage dans le MenuItem
+  const formationGroups = {};
+  (courses || []).forEach((c) => {
+    const original = c.title;
+    const root = getRoot(original);
+    if (!formationGroups[root]) formationGroups[root] = new Set();
+    formationGroups[root].add(original);
+  });
+  const formations = formationRoots.map((root) => ({
+    root: root.charAt(0).toUpperCase() + root.slice(1),
+    originals: Array.from(formationGroups[root] || [])
+  }));
 
   const handleViewDetails = (id) => {
     navigate(`/home/university/${id}`);
   };
 
-  useEffect(() => {
-    const fetchUniversities = async () => {
-      try {
-        const response = await axios.get("/api/institutions");
-        const data = response.data.member || [];
-        setUniversities(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Erreur lors du chargement des universités :", error);
-        setUniversities([]);
-      }
-    };
-    fetchUniversities();
-  }, []);
+  const universities = Array.isArray(institutions.member) ? institutions.member : (Array.isArray(institutions) ? institutions : []);
+
+  // DEBUG : Afficher pour chaque université la liste des formations trouvées
+  universities.forEach(u => {
+    const universityCourses = courses.filter(course => {
+      if (!course.institutions) return false;
+      const institutionId = course.institutions.split('/').pop();
+      return String(institutionId) === String(u.id);
+    });
+    console.log(`Université: ${u.institution_name} (id: ${u.id}) - Formations:`, universityCourses.map(c => c.title));
+  });
 
   const filtered = universities
     .filter((u) =>
-      (u.institution_name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (u.localisation || "").toLowerCase().includes(search.toLowerCase()) ||
-      (u.region || "").toLowerCase().includes(search.toLowerCase())
+      (u.institution_name || "").toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      (u.localisation || "").toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      (u.region || "").toLowerCase().includes(debouncedSearch.toLowerCase())
     )
-    .filter((u) => !selectedRegion || u.region === selectedRegion)
-    .filter((u) => !selectedFormation || u.formation === selectedFormation);
+    .filter((u) => !debouncedRegion || (u.region || '').toLowerCase() === debouncedRegion.toLowerCase())
+    .filter((u) => {
+      if (!debouncedFormation) return true;
+      const universityCourses = courses.filter(course => {
+        if (!course.institutions) return false;
+        const institutionId = course.institutions.split('/').pop();
+        return String(institutionId) === String(u.id);
+      });
+      const hasFormation = universityCourses.some(course =>
+        course.title && course.title.trim().toLowerCase() === debouncedFormation.trim().toLowerCase()
+      );
+      if (hasFormation) {
+        console.log(`Université ${u.institution_name} a la formation ${debouncedFormation}`);
+      }
+      return hasFormation;
+    })
+    .filter((u) => {
+      if (!debouncedCost) return true;
+      const universityCourses = courses.filter(course => {
+        if (!course.institutions) return false;
+        const institutionId = course.institutions.split('/').pop();
+        return String(institutionId) === String(u.id);
+      });
+      const hasMatchingCost = universityCourses.some(course => {
+        if (!course.fees) return false;
+        const feesClean = course.fees.replace(/[^0-9\-]/g, '').replace(/--+/g, '-');
+        const feesRange = feesClean.split('-');
+        let maxFee = 0;
+        if (feesRange.length === 2) {
+          maxFee = parseInt(feesRange[1], 10);
+        } else if (feesRange.length === 1) {
+          maxFee = parseInt(feesRange[0], 10);
+        }
+        if (isNaN(maxFee)) return false;
+        switch (debouncedCost) {
+          case "free":
+            return maxFee === 0;
+          case "between_500k_1m":
+            return maxFee >= 500000 && maxFee <= 1000000;
+          case "less_than_1m":
+            return maxFee < 1000000;
+          case "between_1m_2m":
+            return maxFee >= 1000000 && maxFee <= 2000000;
+          case "more_than_2m":
+            return maxFee > 2000000;
+          default:
+            return true;
+        }
+      });
+      if (hasMatchingCost) {
+        console.log(`Université ${u.institution_name} a un cours avec le coût sélectionné`);
+      }
+      return hasMatchingCost;
+    });
+
+  // Debug log
+  console.log("Filtered universities:", filtered);
 
   return (
     <Box
@@ -88,7 +172,7 @@ function University() {
     >
       <Container maxWidth="xl">
         <Typography variant="h4" fontWeight={700}  textAlign="center" mb={4}>
-          Les universités de Madagascar
+          Les universités à Madagascar
         </Typography>
 
         <Stack spacing={3} sx={{ mb: 4 }}>
@@ -168,149 +252,218 @@ function University() {
               >
                 <MenuItem value="">Toutes les formations</MenuItem>
                 {formations.map((formation) => (
-                  <MenuItem key={formation} value={formation}>{formation}</MenuItem>
+                  <MenuItem key={formation.root} value={formation.root}>
+                    {formation.root}
+                    {formation.originals.length > 1 && (
+                      <span style={{ color: '#888', fontSize: '0.95em', marginLeft: 6 }}>
+                        ({formation.originals.join(', ')})
+                      </span>
+                    )}
+                  </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+            <FormControl
+              sx={{
+                minWidth: 180,
+                background: 'white',
+                borderRadius: 2,
+                boxShadow: 1,
+                height: 48,
+                justifyContent: 'center',
+              }}
+              size="medium"
+            >
+              <InputLabel>Coût de formation</InputLabel>
+              <Select
+                value={selectedCost}
+                label="Coût de formation"
+                onChange={(e) => setSelectedCost(e.target.value)}
+                sx={{ height: 48 }}
+              >
+                <MenuItem value="">Tous les coûts</MenuItem>
+                <MenuItem value="free">Gratuit (0 Ar/an)</MenuItem>
+                <MenuItem value="between_500k_1m">Entre 500 000 Ar et 1 000 000 Ar/an</MenuItem>
+                <MenuItem value="less_than_1m">Moins de 1 000 000 Ar/an</MenuItem>
+                <MenuItem value="between_1m_2m">Entre 1 000 000 Ar et 2 000 000 Ar/an</MenuItem>
+                <MenuItem value="more_than_2m">Plus de 2 000 000 Ar/an</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </Stack>
 
-        <Grid container spacing={3}>
-          {filtered.map((uni) => (
-            <Grid item xs={12} md={4} key={uni.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Card
-                sx={{
-                  width: 340,
-                  minHeight: 380,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 6
-                  }
-                }}
-                onClick={() => handleViewDetails(uni.id)}
-              >
-                <Box
-                  sx={{
-                    height: 140,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: '#f5f5f5',
-                    textAlign: 'justify'
-                  }}
-                >
-                  {uni.photo ? (
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={uni.photo}
-                      alt={uni.institution_name}
-                      sx={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <SchoolIcon sx={{ fontSize: 80, color: '#1976d2' }} />
-                  )}
-                </Box>
-                <CardContent
-                  sx={{
-                    flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    p: 2,
-                    minHeight: 140,
-                    maxHeight: 200,
-                    overflow: 'hidden',
-                    textAlign: 'justify',
-                  }}
-                >
-                  <Typography
-                    variant="subtitle1"
-                    component="h2"
-                    fontWeight={700}
-                    sx={{
-                      fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' },
-                      wordBreak: 'break-word',
-                      width: '100%',
-                      mb: 1,
-                      lineHeight: 1.2,
-                      textAlign: 'left',
-                      minHeight: '2.4em',
-                      maxHeight: '3.6em',
-                      overflow: 'hidden',
-                      display: 'block'
-                    }}
-                    title={uni.institution_name}
-                  >
-                    {uni.institution_name}
-                  </Typography>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    gap: 1.5
-                  }}>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}>
-                        Type : {(() => {
-                          const typeClean = (uni.type || "").trim().toLowerCase();
-                          const isPublic = typeClean === "publique" || typeClean === "public";
-                          return (
-                            <Typography
-                              component="span"
-                              sx={{
-                                color: isPublic ? "#2e7d32" : "#1976d2",
-                                fontWeight: 600,
-                                ml: 0.5
-                              }}
-                            >
-                              {uni.type}
+        {loading || universities.length === 0 ? (
+          <Grid container spacing={3}>
+            {[...Array(6)].map((_, idx) => (
+              <Grid item xs={12} md={4} key={idx} sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Card sx={{ width: 340, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
+                  <Skeleton variant="rectangular" height={140} />
+                  <CardContent>
+                    <Skeleton variant="text" width="80%" height={32} />
+                    <Skeleton variant="text" width="60%" height={24} />
+                    <Skeleton variant="text" width="40%" height={24} />
+                    <Skeleton variant="text" width="50%" height={24} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <>
+            <Box sx={{ mb: 2 }}>
+              {filtered.length === 0 ? (
+                <Typography variant="subtitle1" color="text.secondary" align="center">
+                  Aucun résultat trouvé.
+                </Typography>
+              ) : (
+                <Typography variant="subtitle1" color="text.secondary" align="center">
+                  {filtered.length} résultat{filtered.length > 1 ? 's' : ''} affiché{filtered.length > 1 ? 's' : ''}
+                </Typography>
+              )}
+            </Box>
+            {filtered.length === 0 ? null : (
+              <Grid container spacing={2}>
+                {filtered.map((uni) => (
+                  <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Card
+                      sx={{
+                        width: 365,
+                        minHeight: 400,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: 6
+                        }
+                      }}
+                      onClick={() => handleViewDetails(uni.id)}
+                    >
+                      <Box
+                        sx={{
+                          height: 140,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: '#f5f5f5',
+                          textAlign: 'justify'
+                        }}
+                      >
+                        {uni.photo ? (
+                          <CardMedia
+                            component="img"
+                            height="140"
+                            image={uni.photo}
+                            alt={uni.institution_name}
+                            sx={{ objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <SchoolIcon sx={{ fontSize: 80, color: '#1976d2' }} />
+                        )}
+                      </Box>
+                      <CardContent
+                        sx={{
+                          flexGrow: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2,
+                          p: 2,
+                          minHeight: 140,
+                          maxHeight: 200,
+                          overflow: 'hidden',
+                          textAlign: 'justify',
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle1"
+                          component="h2"
+                          fontWeight={700}
+                          sx={{
+                            fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' },
+                            wordBreak: 'break-word',
+                            width: '100%',
+                            mb: 1,
+                            lineHeight: 1.2,
+                            textAlign: 'left',
+                            minHeight: '2.4em',
+                            maxHeight: '3.6em',
+                            overflow: 'hidden',
+                            display: 'block'
+                          }}
+                          title={uni.institution_name}
+                        >
+                          {uni.institution_name}
+                        </Typography>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          gap: 1.5
+                        }}>
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}>
+                              Type : {(() => {
+                                const typeClean = (uni.type || "").trim().toLowerCase();
+                                const isPublic = typeClean === "publique" || typeClean === "public";
+                                return (
+                                  <Typography
+                                    component="span"
+                                    sx={{
+                                      color: isPublic ? "#2e7d32" : "#1976d2",
+                                      fontWeight: 600,
+                                      ml: 0.5
+                                    }}
+                                  >
+                                    {uni.type}
+                                  </Typography>
+                                );
+                              })()}
                             </Typography>
-                          );
-                        })()}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
-                        sx={{
-                          wordBreak: 'break-word',
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          textAlign: 'justify',
-                        }}
-                        title={uni.region}
-                      >
-                        <TravelExploreIcon sx={{ fontSize: 18, mr: 0.5, color: '#ed6c02' }} />
-                        <span style={{ flex: 1 }}>{uni.region}</span>
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
-                        sx={{
-                          wordBreak: 'break-word',
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          textAlign: 'justify',
-                        }}
-                        title={uni.location}
-                      >
-                        <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: '#1976d2' }} />
-                        <span style={{ flex: 1 }}>{uni.location}</span>
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                          </Box>
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
+                              sx={{
+                                wordBreak: 'break-word',
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                textAlign: 'justify',
+                              }}
+                              title={uni.region}
+                            >
+                              <TravelExploreIcon sx={{ fontSize: 18, mr: 0.5, color: '#ed6c02' }} />
+                              <span style={{ flex: 1 }}>{uni.region}</span>
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
+                              sx={{
+                                wordBreak: 'break-word',
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                textAlign: 'justify',
+                              }}
+                              title={uni.location}
+                            >
+                              <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: '#1976d2' }} />
+                              <span style={{ flex: 1 }}>{uni.location}</span>
+                            </Typography>
+                          </Box>
+                          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                            <Rating name={`rating-${uni.id}`} value={4} precision={0.5} readOnly size="small" />
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </>
+        )}
       </Container>
     </Box>
   );

@@ -105,7 +105,7 @@ function Register() {
                     />
                     <Bouton
                         
-                        label="Se connecter"
+                        label="S'inscrire"
                         backgroundColor='black' 
                         hoverbackground='#B67878'  
                         color='white' 
