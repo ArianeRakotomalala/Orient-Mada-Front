@@ -116,18 +116,20 @@ export const UserProvider = ({ children }) => {
 
       setUser(connectedUser);
 
-      // Chargement du profil utilisateur si l'id existe
-      if (connectedUser.user_profils_id_id) {
-        axios
-          .get(connectedUser.user_profils_id_id)
-          .then((response) => {
-              setUserProfils(response.data);
-          })
-          .catch((error) => {
-            console.error("Erreur lors du chargement du profil utilisateur :", error);
-            setUserProfils(null);
-          });
-      }
+      // Chargement du profil utilisateur lié à l'utilisateur connecté
+      axios
+        .get('/api/users_profils', { params: { user: `/api/users/${connectedUser.id}` } })
+        .then((response) => {
+          let profils = response.data['hydra:member'] || response.data.member || [];
+          // Filtrer pour ne garder que le profil du user connecté
+          profils = profils.filter(p => p.user === `/api/users/${connectedUser.id}`);
+          setUserProfils(profils.length > 0 ? profils[0] : null);
+          console.log(profils);
+        })
+        .catch((error) => {
+          console.error("Erreur lors du chargement du profil utilisateur :", error);
+          setUserProfils(null);
+        });
     } catch (error) {
       console.error("Erreur lors de la récupération des données utilisateur :", error);
       // Nettoyer le localStorage si les données sont corrompues
@@ -161,3 +163,4 @@ export const UserProvider = ({ children }) => {
     </UserContext.Provider>
   );
 };
+

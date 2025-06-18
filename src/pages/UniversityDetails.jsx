@@ -12,15 +12,19 @@ import {
     Button,
     Rating,
     Avatar,
-    Divider
+    Divider,
+    Snackbar,
+    Alert
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { DataContext } from '../Context/DataContext'; // adapte le chemin si besoin
+import { UserContext } from '../Context/UserContext';
 import EventIcon from '@mui/icons-material/Event';
 import PlaceIcon from '@mui/icons-material/Place';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Skeleton from '@mui/material/Skeleton';
 
 // Fix pour les icônes Leaflet
@@ -85,6 +89,10 @@ const UniversityDetails = () => {
     const [error, setError] = useState(null);
     const { courses, events } = useContext(DataContext); // adapte le nom si besoin
     const [mapPosition, setMapPosition] = useState(null);
+    const { user } = useContext(UserContext);
+    const [registeredEvents, setRegisteredEvents] = useState([]); // ids des events où l'utilisateur est inscrit
+    const [loadingRegister, setLoadingRegister] = useState({}); // loading par event
+    const [openSnackbar, setOpenSnackbar] = useState(false);
 
     // Avis mockés (à remplacer par API plus tard)
     const [reviews, setReviews] = useState([
@@ -219,6 +227,26 @@ const UniversityDetails = () => {
         }
     };
 
+    const handleParticipate = async (eventId) => {
+        if (!user?.id) return;
+        setLoadingRegister(prev => ({ ...prev, [eventId]: true }));
+        try {
+            await axios.post('/api/event_registrations', {
+                user: `/api/users/${user.id}`,
+                events: `/api/events/${eventId}`,
+                status: false
+            }, {
+                headers: { 'Content-Type': 'application/ld+json' }
+            });
+            setRegisteredEvents(prev => [...prev, eventId]);
+            setOpenSnackbar(true);
+        } catch (e) {
+            alert("Erreur lors de l'inscription à l'événement");
+        } finally {
+            setLoadingRegister(prev => ({ ...prev, [eventId]: false }));
+        }
+    };
+
     return (
         <Box sx={{ p: { xs: 1, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
             <Grid container spacing={4}>
@@ -330,7 +358,18 @@ const UniversityDetails = () => {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ ml: { sm: 2 }, mt: { xs: 2, sm: 0 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <Button variant="contained" color="primary">Participer</Button>
+                                        {registeredEvents.includes(event.id) ? (
+                                            <CheckCircleIcon sx={{ color: 'green', fontSize: 36 }} />
+                                        ) : (
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={() => handleParticipate(event.id)}
+                                                disabled={loadingRegister[event.id]}
+                                            >
+                                                Participer
+                                            </Button>
+                                        )}
                                     </Box>
                                 </Card>
                             </Grid>
@@ -394,6 +433,22 @@ const UniversityDetails = () => {
                     </Box>
                 </ReviewForm>
             </Box>
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={2500}
+                onClose={() => setOpenSnackbar(false)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    elevation={6}
+                    variant="filled"
+                    onClose={() => setOpenSnackbar(false)}
+                    severity="success"
+                    icon={<CheckCircleIcon fontSize="inherit" sx={{ color: 'white' }} />}
+                >
+                    Vous avez participé
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

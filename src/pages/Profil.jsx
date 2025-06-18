@@ -16,12 +16,15 @@ import {
   CardContent,
   Divider,
   CircularProgress,
+  Snackbar,
 } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { UserContext } from "../Context/UserContext";
 import { DataContext } from "../Context/DataContext";
 import { Phone, Email, LocationOn, Cake, Person, Interests, Favorite } from "@mui/icons-material";
 import axios from 'axios';
+import MuiAlert from '@mui/material/Alert';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 function stringAvatar(name) {
   return {
@@ -45,6 +48,7 @@ export default function Profil() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -81,6 +85,8 @@ export default function Profil() {
         adress: formData.adresse,
         hobbies: formData.hobbies,
         serie: formData.serie,
+        // Ajouter le champ user uniquement lors de la création
+        ...(userProfils?.id ? {} : { user: `/api/users/${user.id}` })
       };
 
       // 1. Création ou modification du profil
@@ -88,40 +94,20 @@ export default function Profil() {
       const url = userProfils?.id
         ? `/api/users_profils/${userProfils.id}`
         : '/api/users_profils';
+      const headers = {
+        'Content-Type': userProfils?.id ? 'application/merge-patch+json' : 'application/ld+json'
+      };
       const response = await axios({
         method,
         url,
         data: profilPayload,
-        headers: {
-          'Content-Type': 'application/ld+json'
-        }
+        headers
       });
-      console.log(response.data.member);
-      // 2. Récupérer l'id du profil (selon la structure de ta réponse API)
-      let profilId = response.data.id || response.data._id;
-      if (!profilId && response.data['@id']) {
-        // Extraire l'id de l'IRI
-        const iriParts = response.data['@id'].split('/');
-        profilId = iriParts[iriParts.length - 1];
-      }
-      if (!profilId) throw new Error("Impossible de récupérer l'id du profil créé/modifié");
-
-      // 3. Mettre à jour le user avec le nouvel id de profil (en IRI)
-      const userUpdateRes = await axios.patch(`/api/users/${user.id}`, {
-        user_profils_id_id: `/api/users_profils/${profilId}`,
-      }, {
-        headers: {
-          'Content-Type': 'application/ld+json'
-        }
-      });
-
-      // 4. Mettre à jour le contexte utilisateur et le localStorage
-      const updatedUser = { ...user, user_profils_id_id: `/api/users_profils/${profilId}` };
-      setUser(updatedUser);
-      localStorage.setItem("user_info", JSON.stringify(updatedUser));
-
-      alert('Profil et utilisateur sauvegardés avec succès !');
+      console.log('Réponse PATCH/POST profil:', response.data);
+      setOpenSnackbar(true);
+      
     } catch (error) {
+      console.error('Erreur lors de la sauvegarde du profil:', error, error.response);
       alert(error.response?.data?.message || error.message || 'Erreur lors de la sauvegarde');
     }
   };
@@ -163,14 +149,17 @@ export default function Profil() {
         <Box sx={{ maxWidth: "600px", mx: "auto" }}>
           <Box sx={{ position: "relative", width: 140, height: 140, mx: "auto", mb: 4 }}>
             <Avatar
-              {...stringAvatar(formData.email || formData.nom)}
               sx={{
                 width: 140,
                 height: 140,
                 bgcolor: "#1976d2",
                 fontSize: 56,
               }}
-            />
+            >
+              {userProfils?.name
+                ? userProfils.name.charAt(0).toUpperCase()
+                : (user.email ? user.email.charAt(0).toUpperCase() : "?")}
+            </Avatar>
             <IconButton
               sx={{
                 position: "absolute",
@@ -189,9 +178,9 @@ export default function Profil() {
             </IconButton>
           </Box>
           <Typography variant="h5" fontWeight={800} mb={4} color="text.primary" textAlign="center">
-            {formData.nom
-              ? formData.nom.charAt(0).toUpperCase() + formData.nom.slice(1).toLowerCase()
-              : formData.email.charAt(0).toUpperCase() + formData.email.slice(1).toLowerCase()}
+            {userProfils?.name
+              ? `${userProfils.name.charAt(0).toUpperCase() + userProfils.name.slice(1).toLowerCase()}${userProfils.firstname ? ' ' + userProfils.firstname.charAt(0).toUpperCase() + userProfils.firstname.slice(1).toLowerCase() : ''}`
+              : (user.email ? user.email.charAt(0).toUpperCase() + user.email.slice(1).toLowerCase() : "")}
           </Typography>
 
           <Stack spacing={2}>
@@ -333,6 +322,33 @@ export default function Profil() {
           })()
         )}
       </Box>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={(_, reason) => {
+          setOpenSnackbar(false);
+          if (reason !== 'clickaway') {
+            window.location.reload();
+          }
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <MuiAlert
+          elevation={6}
+          variant="filled"
+          onClose={(_, reason) => {
+            setOpenSnackbar(false);
+            if (reason !== 'clickaway') {
+              window.location.reload();
+            }
+          }}
+          severity="success"
+          icon={<CheckCircleIcon fontSize="inherit" sx={{ color: 'white' }} />}
+          sx={{ alignItems: 'center' }}
+        >
+          Profil sauvegardé avec succès !
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }
