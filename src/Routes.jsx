@@ -11,6 +11,7 @@ import University from "./pages/University";
 import Formation from "./pages/Formation";
 import UniversityDetails from "./pages/UniversityDetails";
 import Profil from "./pages/Profil";
+import Message from "./pages/Message";
 
 function AppRoute() {
     return (
@@ -26,6 +27,7 @@ function AppRoute() {
             <Route path="formation" element={<Formation />} />
             <Route path="profil" element={<Profil/>}/>
             <Route path="post/:i" element={<PostCard/>}/>
+            <Route path="message" element={<Message/>}/>
         </Route>
             
     </Routes>

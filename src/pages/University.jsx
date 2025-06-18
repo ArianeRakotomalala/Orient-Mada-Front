@@ -98,7 +98,7 @@ function University() {
   const filtered = universities
     .filter((u) =>
       (u.institution_name || "").toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      (u.localisation || "").toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      (u.location || "").toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       (u.region || "").toLowerCase().includes(debouncedSearch.toLowerCase())
     )
     .filter((u) => !debouncedRegion || (u.region || '').toLowerCase() === debouncedRegion.toLowerCase())
@@ -324,11 +324,11 @@ function University() {
             {filtered.length === 0 ? null : (
               <Grid container spacing={2}>
                 {filtered.map((uni) => (
-                  <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
                     <Card
                       sx={{
                         width: 365,
-                        minHeight: 400,
+                        minHeight: 320,
                         display: 'flex',
                         flexDirection: 'column',
                         cursor: 'pointer',
@@ -342,21 +342,28 @@ function University() {
                     >
                       <Box
                         sx={{
-                          height: 140,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           bgcolor: '#f5f5f5',
-                          textAlign: 'justify'
+                          p: 0,
+                          m: 0,
+                          width: '100%',
                         }}
                       >
-                        {uni.photo ? (
+                        {uni.src_img ? (
                           <CardMedia
                             component="img"
-                            height="140"
+                            sx={{ objectFit: 'contain', width: '100%', maxHeight: 150 }}
+                            image={uni.src_img}
+                            alt={uni.institution_name}
+                          />
+                        ) : uni.photo ? (
+                          <CardMedia
+                            component="img"
+                            sx={{ objectFit: 'contain', width: '100%', maxHeight: 150 }}
                             image={uni.photo}
                             alt={uni.institution_name}
-                            sx={{ objectFit: 'cover' }}
                           />
                         ) : (
                           <SchoolIcon sx={{ fontSize: 80, color: '#1976d2' }} />
@@ -367,11 +374,9 @@ function University() {
                           flexGrow: 1,
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: 2,
-                          p: 2,
-                          minHeight: 140,
-                          maxHeight: 200,
-                          overflow: 'hidden',
+                          gap: 1,
+                          p: 1,
+                          minHeight: 100,
                           textAlign: 'justify',
                         }}
                       >
@@ -398,7 +403,9 @@ function University() {
                         <Box sx={{ 
                           display: 'flex', 
                           flexDirection: 'column',
-                          gap: 1.5
+                          gap: 1.5,
+                          flexGrow: 1,
+                          justifyContent: 'space-between',
                         }}>
                           <Box>
                             <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}>
@@ -452,8 +459,14 @@ function University() {
                               <span style={{ flex: 1 }}>{uni.location}</span>
                             </Typography>
                           </Box>
-                          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                            <Rating name={`rating-${uni.id}`} value={4} precision={0.5} readOnly size="small" />
+                          <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'center', minHeight: 32 }}>
+                            <Rating 
+                              name={`rating-${uni.id}`}
+                              value={2.5 + (parseInt(uni.id, 10) % 25) / 10}
+                              precision={0.5} 
+                              readOnly 
+                              size="small" 
+                            />
                           </Box>
                         </Box>
                       </CardContent>
