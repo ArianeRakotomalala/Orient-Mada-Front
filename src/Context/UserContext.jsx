@@ -119,20 +119,9 @@ export const UserProvider = ({ children }) => {
       // Chargement du profil utilisateur si l'id existe
       if (connectedUser.user_profils_id_id) {
         axios
-          .get(`/api/users_profils`, {
-            params: { user_profils_id_id: connectedUser.user_profils_id_id },
-          })
+          .get(connectedUser.user_profils_id_id)
           .then((response) => {
-            const profils = response.data;
-            const firstProfil =
-              profils.member && profils.member.length > 0 ? profils.member[0] : null;
-
-            if (firstProfil) {
-              setUserProfils(firstProfil);
-            } else {
-              console.warn("Aucun profil utilisateur trouvé dans la réponse.");
-              setUserProfils(null);
-            }
+              setUserProfils(response.data);
           })
           .catch((error) => {
             console.error("Erreur lors du chargement du profil utilisateur :", error);

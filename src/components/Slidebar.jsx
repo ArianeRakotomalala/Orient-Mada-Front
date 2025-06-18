@@ -145,18 +145,22 @@ function Slidebar() {
 
                 <Divider sx={{ my: 2 }} />
 
-                <nav>
-                    <NavLink to="/home/explore" style={navLinkStyle}>
-                        <ExploreIcon sx={{ mr: 1 }} /> Explorer
+                <nav>  
+                     <NavLink to="/home/explore" style={navLinkStyle}>
+                        <ExploreIcon sx={{ mr: 1 }} />
+                        <Typography variant="body1" >Explorer</Typography>
                     </NavLink>
                     <NavLink to="/home/university" style={navLinkStyle}>
-                        <SchoolIcon sx={{ mr: 1 }} /> Universités
+                        <SchoolIcon sx={{ mr: 1 }} />
+                        <Typography variant="body1" >Universités</Typography>
                     </NavLink>
                     <NavLink to="/home/formation" style={navLinkStyle}>
-                        <WorkIcon sx={{ mr: 1 }} /> Formation
+                        <WorkIcon sx={{ mr: 1 }} />
+                        <Typography variant="body1" >Formation</Typography>
                     </NavLink>
                     <NavLink to="home/ event" style={navLinkStyle}>
-                        <EventIcon sx={{ mr: 1 }} /> Événement
+                        <EventIcon sx={{ mr: 1 }} />
+                        <Typography variant="body1">Événement</Typography>
                     </NavLink>
                 </nav>
 

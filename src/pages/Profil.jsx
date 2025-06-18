@@ -21,6 +21,7 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { UserContext } from "../Context/UserContext";
 import { DataContext } from "../Context/DataContext";
 import { Phone, Email, LocationOn, Cake, Person, Interests, Favorite } from "@mui/icons-material";
+import axios from 'axios';
 
 function stringAvatar(name) {
   return {
@@ -29,7 +30,7 @@ function stringAvatar(name) {
 }
 
 export default function Profil() {
-  const { user, userProfils, favorisUtilisateur, loadingFavoris } = useContext(UserContext);
+  const { user, userProfils, favorisUtilisateur, loadingFavoris, setUser } = useContext(UserContext);
   const { institutions } = useContext(DataContext);
 
   const [formData, setFormData] = useState({
@@ -70,8 +71,59 @@ export default function Profil() {
     setFormData({ ...formData, [field]: event.target.value });
   };
 
-  const handleSubmit = () => {
-    console.log("Données sauvegardées :", formData);
+  const handleSubmit = async () => {
+    try {
+      // Mapper les champs du formulaire vers ceux attendus par l'API
+      const profilPayload = {
+        name: formData.nom,
+        firstname: formData.prenom,
+        birthday: formData.date_naissance,
+        adress: formData.adresse,
+        hobbies: formData.hobbies,
+        serie: formData.serie,
+      };
+
+      // 1. Création ou modification du profil
+      const method = userProfils?.id ? 'patch' : 'post';
+      const url = userProfils?.id
+        ? `/api/users_profils/${userProfils.id}`
+        : '/api/users_profils';
+      const response = await axios({
+        method,
+        url,
+        data: profilPayload,
+        headers: {
+          'Content-Type': 'application/ld+json'
+        }
+      });
+      console.log(response.data.member);
+      // 2. Récupérer l'id du profil (selon la structure de ta réponse API)
+      let profilId = response.data.id || response.data._id;
+      if (!profilId && response.data['@id']) {
+        // Extraire l'id de l'IRI
+        const iriParts = response.data['@id'].split('/');
+        profilId = iriParts[iriParts.length - 1];
+      }
+      if (!profilId) throw new Error("Impossible de récupérer l'id du profil créé/modifié");
+
+      // 3. Mettre à jour le user avec le nouvel id de profil (en IRI)
+      const userUpdateRes = await axios.patch(`/api/users/${user.id}`, {
+        user_profils_id_id: `/api/users_profils/${profilId}`,
+      }, {
+        headers: {
+          'Content-Type': 'application/ld+json'
+        }
+      });
+
+      // 4. Mettre à jour le contexte utilisateur et le localStorage
+      const updatedUser = { ...user, user_profils_id_id: `/api/users_profils/${profilId}` };
+      setUser(updatedUser);
+      localStorage.setItem("user_info", JSON.stringify(updatedUser));
+
+      alert('Profil et utilisateur sauvegardés avec succès !');
+    } catch (error) {
+      alert(error.response?.data?.message || error.message || 'Erreur lors de la sauvegarde');
+    }
   };
 
   if (!user) {
