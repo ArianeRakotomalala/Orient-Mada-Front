@@ -23,7 +23,7 @@ function getFirstLetterNoAccent(str) {
         .replace(/[\u0300-\u036f]/g, '');
 }
 
-function PostCard({ id, description, ville, srcimage, university, collections = [], loadingCollections = false, loading = false }) {
+function PostCard({ id, description, ville, region, srcimage, university, collections = [], loadingCollections = false, loading = false }) {
     const navigate = useNavigate();
     const { favorisUtilisateur, ajouterFavori, supprimerFavori, loadingFavoris } = useContext(UserContext);
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -106,11 +106,12 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
                         </Avatar>
                     }
                     title={university }
-                    subheader={ville}
+                    subheader={`${ville} , ${region}`}
                 />
                 <CardMedia
                     component="img"
-                    height="194"
+                    height="260"
+                    sx={{ objectFit: 'cover', maxHeight: 260, width: '100%', background: '#f5f5f5' }}
                     image={srcimage}
                     alt={university}
                 />
@@ -137,6 +138,21 @@ function PostCard({ id, description, ville, srcimage, university, collections = 
                     <Button
                         variant="contained"
                         color="primary"
+                        startIcon={<SchoolIcon />}
+                        sx={{
+                            background: 'linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)',
+                            borderRadius: '30px',
+                            fontWeight: 'bold',
+                            px: 3,
+                            py: 1.2,
+                            fontSize: 16,
+                            boxShadow: '0 2px 8px rgba(79,141,253,0.15)',
+                            textTransform: 'none',
+                            '&:hover': {
+                                background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
+                                color: '#fff',
+                            },
+                        }}
                         onClick={() => navigate(`/home/university/${id}`)}
                     >
                         Voir l'université

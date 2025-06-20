@@ -26,6 +26,12 @@ import EventIcon from '@mui/icons-material/Event';
 import PlaceIcon from '@mui/icons-material/Place';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Skeleton from '@mui/material/Skeleton';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import DirectionsIcon from '@mui/icons-material/Directions';
+import Grow from '@mui/material/Grow';
 
 // Fix pour les icônes Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -81,35 +87,60 @@ const ReviewItem = styled(Box)(({ theme }) => ({
     marginBottom: theme.spacing(2),
 }));
 
+const HeaderBox = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    background: '#fff',
+    borderRadius: '12px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+    gap: theme.spacing(3),
+    [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        padding: theme.spacing(2),
+        gap: theme.spacing(2),
+    },
+}));
+
+const HeaderLogo = styled('img')(({ theme }) => ({
+    width: 180,
+    height: 180,
+    objectFit: 'cover',
+    borderRadius: '10px',
+    background: '#f5f5f5',
+    border: '1px solid #eee',
+    [theme.breakpoints.down('sm')]: {
+        width: 130,
+        height: 130,
+    },
+}));
+
+const HeaderInfo = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+}));
+
 const UniversityDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [university, setUniversity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { courses, events } = useContext(DataContext); // adapte le nom si besoin
+    const { courses, events, users, refreshCourses } = useContext(DataContext); // adapte le nom si besoin
     const [mapPosition, setMapPosition] = useState(null);
     const { user } = useContext(UserContext);
     const [registeredEvents, setRegisteredEvents] = useState([]); // ids des events où l'utilisateur est inscrit
     const [loadingRegister, setLoadingRegister] = useState({}); // loading par event
     const [openSnackbar, setOpenSnackbar] = useState(false);
 
-    // Avis mockés (à remplacer par API plus tard)
-    const [reviews, setReviews] = useState([
-        {
-            id: 1,
-            name: 'Jean',
-            rating: 4,
-            comment: 'Très bonne université, professeurs compétents.',
-        },
-        {
-            id: 2,
-            name: 'Sofia',
-            rating: 5,
-            comment: 'Super expérience, campus agréable.',
-        },
-    ]);
-    const [reviewForm, setReviewForm] = useState({ name: '', rating: 0, comment: '' });
+    // Avis dynamiques
+    const [reviews, setReviews] = useState([]);
+    const [reviewForm, setReviewForm] = useState({ comment: '', rating: 0 });
+    const [loadingReviews, setLoadingReviews] = useState(true);
 
     useEffect(() => {
         const fetchUniversity = async () => {
@@ -161,6 +192,25 @@ const UniversityDetails = () => {
             })
             .catch(() => setMapPosition([-18.8792, 47.5079]));
         }
+    }, [university]);
+
+    const fetchReviews = () => {
+        if (!university?.id) return;
+        setLoadingReviews(true);
+        axios.get(`/api/avis?institutions=/api/institutions/${university.id}`)
+            .then(res => {
+                console.log('Avis API response:', res.data); // debug
+                setReviews(res.data.member || []);
+            })
+            .catch(() => setReviews([]))
+            .finally(() => setLoadingReviews(false));
+    };
+
+    // Charger les avis de l'université
+    useEffect(() => {
+        if (!university) return;
+        fetchReviews();
+        // eslint-disable-next-line
     }, [university]);
 
     if (loading || !mapPosition) {
@@ -216,14 +266,26 @@ const UniversityDetails = () => {
     const handleRatingChange = (_, value) => {
         setReviewForm({ ...reviewForm, rating: value });
     };
-    const handleReviewSubmit = (e) => {
+    const handleReviewSubmit = async (e) => {
         e.preventDefault();
-        if (reviewForm.name && reviewForm.rating && reviewForm.comment) {
-            setReviews([
-                ...reviews,
-                { ...reviewForm, id: Date.now() },
-            ]);
-            setReviewForm({ name: '', rating: 0, comment: '' });
+        if (!reviewForm.comment || !reviewForm.rating || !user?.id) return;
+        if (!university?.id) {
+            alert("L'université n'est pas encore chargée. Veuillez patienter.");
+            return;
+        }
+        try {
+            await axios.post('/api/avis', {
+                contenu: reviewForm.comment,
+                rating: reviewForm.rating,
+                user: `/api/users/${user.id}`,
+                institutions: `/api/institutions/${university.id}`
+            }, {
+                headers: { 'Content-Type': 'application/ld+json' }
+            });
+            fetchReviews(); // Recharge la liste après ajout
+            setReviewForm({ comment: '', rating: 0 });
+        } catch (err) {
+            alert("Erreur lors de l'envoi de l'avis");
         }
     };
 
@@ -247,191 +309,286 @@ const UniversityDetails = () => {
         }
     };
 
+    const handleItinerary = () => {
+        if (!mapPosition) return;
+        if (!navigator.geolocation) {
+            alert("La géolocalisation n'est pas supportée par votre navigateur.");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const destLat = mapPosition[0];
+                const destLon = mapPosition[1];
+                const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${destLat},${destLon}`;
+                window.open(url, '_blank');
+            },
+            (err) => {
+                alert("Impossible de récupérer votre position actuelle. Veuillez autoriser la géolocalisation.");
+            }
+        );
+    };
+
     return (
         <Box sx={{ p: { xs: 1, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
-            <Grid container spacing={4}>
-                <Grid item xs={12} md={7}>
-                    <StyledCard sx={{ mb: 2 }}>
+            {/* Header modernisé */}
+            <HeaderBox>
+                <HeaderLogo
+                    src={university.logo || university.photo || "https://via.placeholder.com/300x200?text=Photo+non+disponible"}
+                    alt={university.institution_name}
+                />
+                <HeaderInfo>
+                    <Typography variant="h4" fontWeight={700} gutterBottom>{university.institution_name}</Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        {university.type ? `Type : ${university.type}` : 'Type non spécifié'}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        {university.region ? `Région : ${university.region}` : 'Région non spécifiée'}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        {university.location ? `Localisation : ${university.location}` : 'Localisation non spécifiée'}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        {university.contact ? `Contact : ${university.contact}` : 'Contact non spécifié'}
+                    </Typography>
+                </HeaderInfo>
+            </HeaderBox>
+            {/* Description/Historique */}
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>Description</Typography>
+                <Typography variant="body1" color="text.secondary">
+                    {university.history || "Aucune description disponible"}
+                </Typography>
+            </Box>
+            {/* Carte */}
+            <StyledCard sx={{ mb: 3 }}>
+                <CardContent>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>Localisation sur la carte</Typography>
+                    <MapWrapper>
+                        <MapContainer 
+                            center={mapPosition} 
+                            zoom={15} 
+                            style={{ height: '100%', width: '100%' }}
+                        >
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            <Marker position={mapPosition}>
+                                <Popup>
+                                    <Typography variant="subtitle2" fontWeight={600}>{university.institution_name}</Typography>
+                                    <Typography variant="body2">Région : {university.region || 'Non spécifiée'}</Typography>
+                                    <Typography variant="body2">Localisation : {university.location || 'Non spécifiée'}</Typography>
+                                </Popup>
+                            </Marker>
+                        </MapContainer>
+                    </MapWrapper>
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleItinerary}
+                            startIcon={<DirectionsIcon />}
+                            sx={{
+                                borderRadius: 99,
+                                px: 3,
+                                py: 1.2,
+                                fontWeight: 600,
+                                fontSize: 16,
+                                boxShadow: '0 2px 8px #1976d220',
+                                textTransform: 'none',
+                                transition: 'background 0.2s, box-shadow 0.2s',
+                                background: 'linear-gradient(90deg, #1976d2 0%, #43a047 100%)',
+                                '&:hover': {
+                                    background: 'linear-gradient(90deg, #43a047 0%, #1976d2 100%)',
+                                    boxShadow: '0 4px 16px #1976d255',
+                                },
+                            }}
+                        >
+                            Itinéraire
+                        </Button>
+                    </Box>
+                </CardContent>
+            </StyledCard>
+            {/* Formations & Evénements côte à côte */}
+            <Grid container spacing={3} sx={{ mb: 4, justifyContent: 'center' }}>
+                <Grid item xs={12} md={6} sx={{ minWidth: 320, maxWidth: 520, flex: '1 1 520px' }}>
+                    <StyledCard sx={{ minHeight: 320 }}>
                         <CardContent>
-                            <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
-                                {university.institution_name}
-                            </Typography>
-                            <Typography variant="body1" paragraph color="text.secondary">
-                                {university.history || "Aucune description disponible"}
-                            </Typography>
-                            <Divider sx={{ my: 2 }} />
-                            <InfoBox>
-                                <Typography variant="subtitle1" fontWeight={600}>Informations</Typography>
+                            <Typography variant="h6" fontWeight={600} gutterBottom>Formations proposées</Typography>
+                            {universityCourses.length > 0 ? (
+                                <Box>
+                                    {universityCourses.map((course, idx) => (
+                                        <Grow in timeout={400 + idx * 120} key={course.id}>
+                                            <div>
+                                                <Accordion sx={{ mb: 1, boxShadow: 'none', border: '1px solid #f0f0f0', borderRadius: 2 }}>
+                                                    <AccordionSummary
+                                                        expandIcon={<ExpandMoreIcon />}
+                                                        aria-controls={`panel-content-${course.id}`}
+                                                        id={`panel-header-${course.id}`}
+                                                    >
+                                                        <Typography fontWeight={600}>{course.title}</Typography>
+                                                    </AccordionSummary>
+                                                    <AccordionDetails>
+                                                        <Typography variant="body2"><b>Durée :</b> {course.duration || 'Non spécifiée'}</Typography>
+                                                        <Typography variant="body2"><b>Diplôme :</b> {course.degree || 'Non spécifié'}</Typography>
+                                                        <Typography variant="body2"><b>Prérequis :</b> {course.prerequisites || 'Non spécifiés'}</Typography>
+                                                        <Typography variant="body2"><b>Admission :</b> {course.admission_process || 'Non spécifié'}</Typography>
+                                                        <Typography variant="body2"><b>Frais :</b> {course.fees || 'Non spécifié'}</Typography>
+                                                        <Typography variant="body2"><b>Langues :</b> {course.languages || 'Non spécifiées'}</Typography>
+                                                        <Typography variant="body2"><b>Débouchés :</b> {course.career_prospects || 'Non spécifiés'}</Typography>
+                                                    </AccordionDetails>
+                                                </Accordion>
+                                            </div>
+                                        </Grow>
+                                    ))}
+                                </Box>
+                            ) : (
                                 <Typography variant="body2" color="text.secondary">
-                                    Région : {university.region || 'Non spécifiée'}
+                                    Aucune formation disponible pour cette université.
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Localisation : {university.location || 'Non spécifiée'}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Type : {university.type || 'Non spécifié'}
-                                </Typography>
-                            </InfoBox>
-                            <MapWrapper>
-                                <MapContainer 
-                                    center={mapPosition} 
-                                    zoom={15} 
-                                    style={{ height: '100%', width: '100%' }}
-                                >
-                                    <TileLayer
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                    />
-                                    <Marker position={mapPosition}>
-                                        <Popup>
-                                            <Typography variant="subtitle2" fontWeight={600}>{university.institution_name}</Typography>
-                                            <Typography variant="body2">Région : {university.region || 'Non spécifiée'}</Typography>
-                                            <Typography variant="body2">Localisation : {university.location || 'Non spécifiée'}</Typography>
-                                        </Popup>
-                                    </Marker>
-                                </MapContainer>
-                            </MapWrapper>
+                            )}
                         </CardContent>
                     </StyledCard>
                 </Grid>
-                <Grid item xs={12} md={5}>
-                    <StyledCard>
-                        <UniversityImage
-                            src={university.src_img || university.photo || "https://via.placeholder.com/300x200?text=Photo+non+disponible"}
-                            alt={university.institution_name}
-                        />
+                <Grid item xs={12} md={6} sx={{ minWidth: 350, maxWidth: 520, flex: '1 1 520px' }}>
+                    <StyledCard sx={{ minHeight: 320 }}>
                         <CardContent>
-                            <Box sx={{ mt: 2 }}>
-                                <Typography variant="h6" gutterBottom fontWeight={600}>
-                                    Contact
-                                </Typography>
+                            <Typography variant="h6" fontWeight={600} gutterBottom>Événements</Typography>
+                            {universityEvents.length > 0 ? (
+                                <Box>
+                                    {universityEvents.map(event => (
+                                        <Card key={event.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #f0f0f0' }}>
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                    <EventIcon color="primary" sx={{ mr: 1 }} />
+                                                    <Typography variant="subtitle1" fontWeight={700}>
+                                                        {event.eventDateTime ? new Date(event.eventDateTime).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' }) : 'Date à venir'}
+                                                    </Typography>
+                                                </Box>
+                                                <Typography variant="h6" fontWeight={700} gutterBottom>{event.title || event.name}</Typography>
+                                                {event.description && (
+                                                    <Typography variant="body2" sx={{ mb: 1 }}>{event.description}</Typography>
+                                                )}
+                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                    Lieu : {university.institution_name}, {university.location}, {university.region}
+                                                </Typography>
+                                                <Box sx={{ mt: 1 }}>
+                                                    {registeredEvents.includes(event.id) ? (
+                                                        <CheckCircleIcon sx={{ color: 'green', fontSize: 28 }} />
+                                                    ) : (
+                                                        <Button
+                                                            variant="contained"
+                                                            color="primary"
+                                                            onClick={() => handleParticipate(event.id)}
+                                                            disabled={loadingRegister[event.id]}
+                                                            size="small"
+                                                        >
+                                                            Participer
+                                                        </Button>
+                                                    )}
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </Box>
+                            ) : (
                                 <Typography variant="body2" color="text.secondary">
-                                    Email : {university.contact || "Non spécifié"}
+                                    Aucun événement pour cette université.
                                 </Typography>
-                            </Box>
+                            )}
                         </CardContent>
                     </StyledCard>
                 </Grid>
             </Grid>
-            <Box sx={{ mt: 4 }}>
+            {/* Section Avis */}
+            <Box sx={{ mb: 4 }}>
                 <StyledCard>
                     <CardContent>
-                        <Typography variant="h6" gutterBottom fontWeight={600}>
-                            Formations proposées
-                        </Typography>
-                        {universityCourses.length > 0 ? (
-                            <ul style={{ paddingLeft: 20 }}>
-                                {universityCourses.map(course => (
-                                    <li key={course.id}>
-                                        <Typography variant="body1">{course.title}</Typography>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <Typography variant="body2" color="text.secondary">
-                                Aucune formation disponible pour cette université.
-                            </Typography>
-                        )}
+                        <Typography variant="h5" fontWeight={700} gutterBottom>Vos avis</Typography>
+                        <Box sx={{ mb: 2 }}>
+                            {loadingReviews || !Array.isArray(users) || users.length === 0 ? (
+                                <Typography variant="body2" color="text.secondary">Chargement des avis...</Typography>
+                            ) : reviews.length > 0 ? reviews
+                                .filter((review) => {
+                                    if (!review.institutions) return false;
+                                    if (typeof review.institutions === 'string') {
+                                        return review.institutions.split('/').pop() === String(university.id);
+                                    } else if (typeof review.institutions === 'object' && review.institutions.id) {
+                                        return String(review.institutions.id) === String(university.id);
+                                    }
+                                    return false;
+                                })
+                                .map((review) => {
+                                    let userId = null;
+                                    if (typeof review.user === 'string') {
+                                        userId = review.user.split('/').pop();
+                                    } else if (typeof review.user === 'object' && review.user?.id) {
+                                        userId = String(review.user.id);
+                                    }
+                                    const userObj = Array.isArray(users) ? users.find(u => String(u.id) === String(userId)) : null;
+                                    let userName = 'Utilisateur';
+                                    let initial = 'U';
+                                    if (userObj) {
+                                        if (userObj.firstname || userObj.lastname) {
+                                            userName = `${userObj.firstname || ''} ${userObj.lastname || ''}`.trim();
+                                            initial = (userObj.firstname || userObj.lastname || 'U').charAt(0).toUpperCase();
+                                        } else if (userObj.name) {
+                                            userName = userObj.name;
+                                            initial = userObj.name.charAt(0).toUpperCase();
+                                        } else if (userObj.nom) {
+                                            userName = userObj.nom;
+                                            initial = userObj.nom.charAt(0).toUpperCase();
+                                        } else if (userObj.username) {
+                                            userName = userObj.username;
+                                            initial = userObj.username.charAt(0).toUpperCase();
+                                        } else if (userObj.email) {
+                                            userName = userObj.email;
+                                            initial = userObj.email.charAt(0).toUpperCase();
+                                        }
+                                    }
+                                    return (
+                                        <ReviewItem key={review.id}>
+                                            <Avatar>{initial}</Avatar>
+                                            <Box>
+                                                <Typography fontWeight={600}>{userName}</Typography>
+                                                <Rating value={review.rating} readOnly size="small" />
+                                                <Typography variant="body2" color="text.secondary">{review.contenu}</Typography>
+                                            </Box>
+                                        </ReviewItem>
+                                    );
+                                }) : (
+                                <Typography variant="body2" color="text.secondary">Aucun avis pour l'instant.</Typography>
+                            )}
+                        </Box>
+                        <ReviewForm onSubmit={handleReviewSubmit}>
+                            <Typography variant="subtitle1" fontWeight={600}>Laisser un avis</Typography>
+                            <Rating
+                                name="rating"
+                                value={reviewForm.rating}
+                                onChange={handleRatingChange}
+                                size="large"
+                            />
+                            <TextField
+                                label="Commentaire"
+                                name="comment"
+                                value={reviewForm.comment}
+                                onChange={handleReviewChange}
+                                required
+                                multiline
+                                minRows={2}
+                            />
+                            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                                <Button type="submit" variant="contained" color="primary" disabled={!university?.id}>
+                                    Envoyer
+                                </Button>
+                                <Button variant="outlined" color="primary" onClick={() => navigate('/home/message')}>
+                                    Contacter
+                                </Button>
+                            </Box>
+                        </ReviewForm>
                     </CardContent>
                 </StyledCard>
-            </Box>
-            {/* Section Events (juste au-dessus des avis) */}
-            <Box sx={{ mt: 4 }}>
-                {universityEvents.length > 0 ? (
-                    <Grid container spacing={2}>
-                        {universityEvents.map(event => (
-                            <Grid item xs={12} md={6} key={event.id}>
-                                <Card sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', p: 2 }}>
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                            <EventIcon color="primary" sx={{ mr: 1 }} />
-                                            <Typography variant="subtitle1" fontWeight={700}>
-                                                {event.eventDateTime ? new Date(event.eventDateTime).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' }) : 'Date à venir'}
-                                            </Typography>
-                                        </Box>
-                                        <Typography variant="h6" fontWeight={700} gutterBottom>{event.title || event.name}</Typography>
-                                        {event.description && (
-                                            <Typography variant="body2" sx={{ mb: 1 }}>{event.description}</Typography>
-                                        )}
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                            Cet événement se tiendra à {university.institution_name}, {university.location}, {university.region}.
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ ml: { sm: 2 }, mt: { xs: 2, sm: 0 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        {registeredEvents.includes(event.id) ? (
-                                            <CheckCircleIcon sx={{ color: 'green', fontSize: 36 }} />
-                                        ) : (
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={() => handleParticipate(event.id)}
-                                                disabled={loadingRegister[event.id]}
-                                            >
-                                                Participer
-                                            </Button>
-                                        )}
-                                    </Box>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Aucun événement pour cette université.
-                    </Typography>
-                )}
-            </Box>
-            {/* Section Avis */}
-            <Box sx={{ mt: 4 }}>
-                <Typography variant="h5" fontWeight={700} gutterBottom>Vos avis</Typography>
-                <Box sx={{ mb: 2 }}>
-                    {reviews.length > 0 ? reviews.map((review) => (
-                        <ReviewItem key={review.id}>
-                            <Avatar>{review.name[0]}</Avatar>
-                            <Box>
-                                <Typography fontWeight={600}>{review.name}</Typography>
-                                <Rating value={review.rating} readOnly size="small" />
-                                <Typography variant="body2" color="text.secondary">{review.comment}</Typography>
-                            </Box>
-                        </ReviewItem>
-                    )) : (
-                        <Typography variant="body2" color="text.secondary">Aucun avis pour l'instant.</Typography>
-                    )}
-                </Box>
-                <ReviewForm onSubmit={handleReviewSubmit}>
-                    <Typography variant="subtitle1" fontWeight={600}>Laisser un avis</Typography>
-                    <TextField
-                        label="Nom"
-                        name="name"
-                        value={reviewForm.name}
-                        onChange={handleReviewChange}
-                        required
-                        size="small"
-                    />
-                    <Rating
-                        name="rating"
-                        value={reviewForm.rating}
-                        onChange={handleRatingChange}
-                        size="large"
-                    />
-                    <TextField
-                        label="Commentaire"
-                        name="comment"
-                        value={reviewForm.comment}
-                        onChange={handleReviewChange}
-                        required
-                        multiline
-                        minRows={2}
-                    />
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                        <Button type="submit" variant="contained" color="primary">
-                            Envoyer
-                        </Button>
-                        <Button variant="outlined" color="primary" onClick={() => navigate('/home/message')}>
-                            Contacter
-                        </Button>
-                    </Box>
-                </ReviewForm>
             </Box>
             <Snackbar
                 open={openSnackbar}

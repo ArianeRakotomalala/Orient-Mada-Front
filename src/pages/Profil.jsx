@@ -33,7 +33,7 @@ function stringAvatar(name) {
 }
 
 export default function Profil() {
-  const { user, userProfils, favorisUtilisateur, loadingFavoris, setUser } = useContext(UserContext);
+  const { user, userProfils, favorisUtilisateur, loadingFavoris, setUser, setUserProfils } = useContext(UserContext);
   const { institutions } = useContext(DataContext);
 
   const [formData, setFormData] = useState({
@@ -104,6 +104,19 @@ export default function Profil() {
         headers
       });
       console.log('Réponse PATCH/POST profil:', response.data);
+      // Mettre à jour le contexte global
+      setUserProfils(response.data);
+      // Mettre à jour le formulaire localement
+      setFormData({
+        nom: response.data.name || "",
+        prenom: response.data.firstname || "",
+        email: formData.email, // l'API ne retourne peut-être pas l'email
+        telephone: formData.telephone, // idem
+        serie: response.data.serie || "",
+        date_naissance: response.data.birthday || "",
+        adresse: response.data.adress || "",
+        hobbies: response.data.hobbies || "",
+      });
       setOpenSnackbar(true);
       
     } catch (error) {
@@ -328,7 +341,7 @@ export default function Profil() {
         onClose={(_, reason) => {
           setOpenSnackbar(false);
           if (reason !== 'clickaway') {
-            window.location.reload();
+            // window.location.reload();
           }
         }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}

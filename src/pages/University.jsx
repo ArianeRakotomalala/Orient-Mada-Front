@@ -296,7 +296,7 @@ function University() {
           <Grid container spacing={3}>
             {[...Array(6)].map((_, idx) => (
               <Grid item xs={12} md={4} key={idx} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Card sx={{ width: 340, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
+                <Card sx={{ width: 360, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
                   <Skeleton variant="rectangular" height={140} />
                   <CardContent>
                     <Skeleton variant="text" width="80%" height={32} />
@@ -327,7 +327,7 @@ function University() {
                   <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
                     <Card
                       sx={{
-                        width: 365,
+                        width: 367,
                         minHeight: 320,
                         display: 'flex',
                         flexDirection: 'column',
@@ -351,11 +351,11 @@ function University() {
                           width: '100%',
                         }}
                       >
-                        {uni.src_img ? (
+                        {uni.logo ? (
                           <CardMedia
                             component="img"
                             sx={{ objectFit: 'contain', width: '100%', maxHeight: 150 }}
-                            image={uni.src_img}
+                            image={uni.logo}
                             alt={uni.institution_name}
                           />
                         ) : uni.photo ? (

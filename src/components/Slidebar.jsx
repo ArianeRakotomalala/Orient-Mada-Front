@@ -19,6 +19,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import { useParams } from 'react-router-dom';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 
 
 const navLinkStyle = ({ isActive }) => ({
@@ -146,9 +147,9 @@ function Slidebar() {
                 <Divider sx={{ my: 2 }} />
 
                 <nav>  
-                     <NavLink to="/home/explore" style={navLinkStyle}>
-                        <ExploreIcon sx={{ mr: 1 }} />
-                        <Typography variant="body1" >Explorer</Typography>
+                    <NavLink to="/home/comparer" style={navLinkStyle}>
+                        <CompareArrowsIcon sx={{ mr: 1 }} />
+                        <Typography variant="body1">Comparer</Typography>
                     </NavLink>
                     <NavLink to="/home/university" style={navLinkStyle}>
                         <SchoolIcon sx={{ mr: 1 }} />

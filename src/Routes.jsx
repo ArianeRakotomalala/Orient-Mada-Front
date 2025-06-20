@@ -5,13 +5,14 @@ import Layout from "./components/Layout";
 import Register from "./pages/Register";
 import PostCard from "./components/PostCard";
 import Feed from "./components/Feed";
-import Essai from "./pages/Orientation";
+import Orientation from "./pages/Orientation";
 import Story from "./components/StoryViewer";
 import University from "./pages/University";
 import Formation from "./pages/Formation";
 import UniversityDetails from "./pages/UniversityDetails";
 import Profil from "./pages/Profil";
 import Message from "./pages/Message";
+import Compare from "./pages/Compare";
 
 function AppRoute() {
     return (
@@ -23,10 +24,10 @@ function AppRoute() {
             <Route index element={<Home/>} />
             <Route path="university" element={<University />} />
             <Route path="university/:id" element={<UniversityDetails />} />
-            <Route path="orientation" element={<Essai />} />
+            <Route path="orientation" element={<Orientation />} />
             <Route path="formation" element={<Formation />} />
             <Route path="profil" element={<Profil/>}/>
-            <Route path="post/:i" element={<PostCard/>}/>
+            <Route path="comparer" element={<Compare/>}/>
             <Route path="message" element={<Message/>}/>
         </Route>
             

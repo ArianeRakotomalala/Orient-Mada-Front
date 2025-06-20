@@ -22,6 +22,8 @@ function Feed() {
       ville: inst.location || "Ville inconnue",
       region: inst.region || "Région inconnue",
       srcimage:
+        inst.src_img ||
+        inst.photo ||
         "https://i.pinimg.com/736x/0f/41/48/0f41481afda9b19fb8b9ba68bcb38b07.jpg",
       university: inst.institution_name,
     }));
@@ -46,6 +48,7 @@ function Feed() {
               title={post.title}
               description={post.description}
               ville={post.ville}
+              region={post.region}
               srcimage={post.srcimage}
               university={post.university}
             />

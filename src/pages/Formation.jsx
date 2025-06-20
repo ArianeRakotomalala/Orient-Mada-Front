@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { DataContext } from '../Context/DataContext';
-import { Card, CardContent, CardMedia, Typography, Grid, Box, CircularProgress } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Grid, Box, CircularProgress, Skeleton   } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import log from '../assets/log.png';
 
@@ -8,6 +8,11 @@ const defaultImage = log;
 
 const Formation = () => {
   const { courses, institutions, loading } = useContext(DataContext);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsPageLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Pour retrouver le nom de l'institution à partir de l'id
   const getInstitutionName = (institutions, id) => {
@@ -16,6 +21,17 @@ const Formation = () => {
     const found = instList.find(inst => String(inst.id) === String(id));
     return found ? found.institution_name : 'Institution inconnue';
   };
+
+  if (isPageLoading) {
+
+    return (
+      <Box sx={{ width: '100%', minHeight: '100vh', py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#f7fafd' }}>
+        <Skeleton variant="text" width={320} height={48} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" width={900} height={60} sx={{ mb: 3, borderRadius: 2 }} />
+        <Skeleton variant="rectangular" width={1000} height={420} sx={{ borderRadius: 3 }} />
+      </Box>
+    );
+  }
 
   if (loading) {
     return (
