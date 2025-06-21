@@ -14,7 +14,8 @@ import {
     Avatar,
     Divider,
     Snackbar,
-    Alert
+    Alert,
+    IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -32,6 +33,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import DirectionsIcon from '@mui/icons-material/Directions';
 import Grow from '@mui/material/Grow';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 
 // Fix pour les icônes Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -130,7 +133,7 @@ const UniversityDetails = () => {
     const [university, setUniversity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { courses, events, users, refreshCourses } = useContext(DataContext); // adapte le nom si besoin
+    const { courses, events, users, refreshCourses } = useContext(DataContext); 
     const [mapPosition, setMapPosition] = useState(null);
     const { user } = useContext(UserContext);
     const [registeredEvents, setRegisteredEvents] = useState([]); // ids des events où l'utilisateur est inscrit
@@ -141,6 +144,27 @@ const UniversityDetails = () => {
     const [reviews, setReviews] = useState([]);
     const [reviewForm, setReviewForm] = useState({ comment: '', rating: 0 });
     const [loadingReviews, setLoadingReviews] = useState(true);
+
+    // Pagination pour les formations
+    const [currentPage, setCurrentPage] = useState(1);
+    const [autoPlay, setAutoPlay] = useState(true);
+    const [expandedAccordion, setExpandedAccordion] = useState(null);
+    const formationsPerPage = 5;
+
+    // Calculer les formations et événements de l'université
+    const universityCourses = university && Array.isArray(courses)
+        ? courses.filter(course => {
+            const institutionId = course.institutions.split('/').pop();
+            return String(institutionId) === String(university.id);
+        })
+        : [];
+
+    const universityEvents = university && Array.isArray(events)
+        ? events.filter(event => {
+            if (!event.institution) return false;
+            return String(event.institution).split('/').pop() === String(university.id);
+        })
+        : [];
 
     useEffect(() => {
         const fetchUniversity = async () => {
@@ -213,6 +237,42 @@ const UniversityDetails = () => {
         // eslint-disable-next-line
     }, [university]);
 
+    // Auto-pagination pour les formations - animation plus lente et fluide
+    useEffect(() => {
+        if (!autoPlay || universityCourses.length <= formationsPerPage || expandedAccordion) return;
+
+        const interval = setInterval(() => {
+            setCurrentPage(prev => {
+                const maxPage = Math.ceil(universityCourses.length / formationsPerPage);
+                return prev >= maxPage ? 1 : prev + 1;
+            });
+        }, 20000); // Change toutes les 20 secondes pour une animation plus douce
+
+        return () => clearInterval(interval);
+    }, [autoPlay, universityCourses.length, expandedAccordion]);
+
+    // Calculer les formations à afficher
+    const indexOfLastFormation = currentPage * formationsPerPage;
+    const indexOfFirstFormation = indexOfLastFormation - formationsPerPage;
+    const currentFormations = universityCourses.slice(indexOfFirstFormation, indexOfLastFormation);
+    const totalPages = Math.ceil(universityCourses.length / formationsPerPage);
+
+    const handleNextPage = () => {
+        setCurrentPage(prev => prev >= totalPages ? 1 : prev + 1);
+    };
+
+    const handlePrevPage = () => {
+        setCurrentPage(prev => prev <= 1 ? totalPages : prev - 1);
+    };
+
+    const handleAccordionChange = (panel) => (event, isExpanded) => {
+        setExpandedAccordion(isExpanded ? panel : null);
+    };
+
+    const toggleAutoPlay = () => {
+        setAutoPlay(!autoPlay);
+    };
+
     if (loading || !mapPosition) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -245,20 +305,6 @@ const UniversityDetails = () => {
             </Box>
         );
     }
-
-    const universityCourses = Array.isArray(courses)
-        ? courses.filter(course => {
-            const institutionId = course.institutions.split('/').pop();
-            return String(institutionId) === String(university.id);
-        })
-        : [];
-
-    const universityEvents = Array.isArray(events)
-        ? events.filter(event => {
-            if (!event.institution) return false;
-            return String(event.institution).split('/').pop() === String(university.id);
-        })
-        : [];
 
     const handleReviewChange = (e) => {
         setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
@@ -355,9 +401,9 @@ const UniversityDetails = () => {
             </HeaderBox>
             {/* Description/Historique */}
             <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" fontWeight={600} gutterBottom>Description</Typography>
+                <Typography variant="h6" fontWeight={600} gutterBottom>Historique</Typography>
                 <Typography variant="body1" color="text.secondary">
-                    {university.history || "Aucune description disponible"}
+                    {university.history || "Aucune historique disponible"}
                 </Typography>
             </Box>
             {/* Carte */}
@@ -412,51 +458,132 @@ const UniversityDetails = () => {
             </StyledCard>
             {/* Formations & Evénements côte à côte */}
             <Grid container spacing={3} sx={{ mb: 4, justifyContent: 'center' }}>
-                <Grid item xs={12} md={6} sx={{ minWidth: 320, maxWidth: 520, flex: '1 1 520px' }}>
-                    <StyledCard sx={{ minHeight: 320 }}>
-                        <CardContent>
-                            <Typography variant="h6" fontWeight={600} gutterBottom>Formations proposées</Typography>
+                <Grid item xs={12} md={6} sx={{ minWidth: 320, maxWidth: 600, flex: '1 1 520px' }}>
+                    <StyledCard sx={{ minHeight: 500, display: 'flex', flexDirection: 'column' }}>
+                        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="h6" fontWeight={600}>
+                                    Formations proposées ({universityCourses.length})
+                                </Typography>
+                                {universityCourses.length > formationsPerPage && (
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 1,
+                                        background: 'linear-gradient(45deg, #f0f8ff, #e3f2fd)',
+                                        borderRadius: '20px',
+                                        px: 2,
+                                        py: 0.5,
+                                        border: '1px solid #e0e0e0'
+                                    }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                            Page {currentPage} sur {totalPages}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
                             {universityCourses.length > 0 ? (
-                                <Box>
-                                    {universityCourses.map((course, idx) => (
-                                        <Grow in timeout={400 + idx * 120} key={course.id}>
-                                            <div>
-                                                <Accordion sx={{ mb: 1, boxShadow: 'none', border: '1px solid #f0f0f0', borderRadius: 2 }}>
-                                                    <AccordionSummary
-                                                        expandIcon={<ExpandMoreIcon />}
-                                                        aria-controls={`panel-content-${course.id}`}
-                                                        id={`panel-header-${course.id}`}
+                                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <Box sx={{ flex: 1 }}>
+                                        {currentFormations.map((course, idx) => (
+                                            <Grow in timeout={800 + idx * 200} key={course.id}>
+                                                <div>
+                                                    <Accordion 
+                                                        expanded={expandedAccordion === `panel-${course.id}`}
+                                                        onChange={handleAccordionChange(`panel-${course.id}`)}
+                                                        sx={{ 
+                                                            mb: 1, 
+                                                            boxShadow: 'none', 
+                                                            border: '1px solid #f0f0f0', 
+                                                            borderRadius: 2,
+                                                            transition: 'all 0.3s ease',
+                                                            '&:hover': {
+                                                                borderColor: '#1976d2',
+                                                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.1)',
+                                                                transform: 'translateY(-1px)'
+                                                            }
+                                                        }}
                                                     >
-                                                        <Typography fontWeight={600}>{course.title}</Typography>
-                                                    </AccordionSummary>
-                                                    <AccordionDetails>
-                                                        <Typography variant="body2"><b>Durée :</b> {course.duration || 'Non spécifiée'}</Typography>
-                                                        <Typography variant="body2"><b>Diplôme :</b> {course.degree || 'Non spécifié'}</Typography>
-                                                        <Typography variant="body2"><b>Prérequis :</b> {course.prerequisites || 'Non spécifiés'}</Typography>
-                                                        <Typography variant="body2"><b>Admission :</b> {course.admission_process || 'Non spécifié'}</Typography>
-                                                        <Typography variant="body2"><b>Frais :</b> {course.fees || 'Non spécifié'}</Typography>
-                                                        <Typography variant="body2"><b>Langues :</b> {course.languages || 'Non spécifiées'}</Typography>
-                                                        <Typography variant="body2"><b>Débouchés :</b> {course.career_prospects || 'Non spécifiés'}</Typography>
-                                                    </AccordionDetails>
-                                                </Accordion>
-                                            </div>
-                                        </Grow>
-                                    ))}
+                                                        <AccordionSummary
+                                                            expandIcon={<ExpandMoreIcon />}
+                                                            aria-controls={`panel-content-${course.id}`}
+                                                            id={`panel-header-${course.id}`}
+                                                            sx={{
+                                                                '&:hover': {
+                                                                    backgroundColor: '#f8f9fa'
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Typography fontWeight={600}>{course.title}</Typography>
+                                                        </AccordionSummary>
+                                                        <AccordionDetails>
+                                                            <Typography variant="body2"><b>Durée :</b> {course.duration || 'Non spécifiée'}</Typography>
+                                                            <Typography variant="body2"><b>Diplôme :</b> {course.degree || 'Non spécifié'}</Typography>
+                                                            <Typography variant="body2"><b>Prérequis :</b> {course.prerequisites || 'Non spécifiés'}</Typography>
+                                                            <Typography variant="body2"><b>Admission :</b> {course.admission_process || 'Non spécifié'}</Typography>
+                                                            <Typography variant="body2"><b>Frais :</b> {course.fees+ " Ariary / an (Frais generaux exclus)"|| 'Non spécifié'}</Typography>
+                                                            <Typography variant="body2"><b>Langues :</b> {course.languages || 'Non spécifiées'}</Typography>
+                                                            <Typography variant="body2"><b>Débouchés :</b> {course.career_prospects || 'Non spécifiés'}</Typography>
+                                                        </AccordionDetails>
+                                                    </Accordion>
+                                                </div>
+                                            </Grow>
+                                        ))}
+                                    </Box>
+                                    
+                                    {/* Boutons Précédent/Suivant */}
+                                    {universityCourses.length > formationsPerPage && (
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            alignItems: 'center',
+                                            mt: 3,
+                                            gap: 2
+                                        }}>
+                                            <IconButton 
+                                                onClick={handlePrevPage}
+                                                size="large"
+                                                sx={{
+                                                    backgroundColor: '#f5f5f5',
+                                                    '&:hover': {
+                                                        backgroundColor: '#e0e0e0'
+                                                    }
+                                                }}
+                                            >
+                                                <NavigateBeforeIcon />
+                                            </IconButton>
+                                            
+                                            <IconButton 
+                                                onClick={handleNextPage}
+                                                size="large"
+                                                sx={{
+                                                    backgroundColor: '#f5f5f5',
+                                                    '&:hover': {
+                                                        backgroundColor: '#e0e0e0'
+                                                    }
+                                                }}
+                                            >
+                                                <NavigateNextIcon />
+                                            </IconButton>
+                                        </Box>
+                                    )}
                                 </Box>
                             ) : (
-                                <Typography variant="body2" color="text.secondary">
-                                    Aucune formation disponible pour cette université.
-                                </Typography>
+                                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Aucune formation disponible pour cette université.
+                                    </Typography>
+                                </Box>
                             )}
                         </CardContent>
                     </StyledCard>
                 </Grid>
                 <Grid item xs={12} md={6} sx={{ minWidth: 350, maxWidth: 520, flex: '1 1 520px' }}>
-                    <StyledCard sx={{ minHeight: 320 }}>
-                        <CardContent>
+                    <StyledCard sx={{ minHeight: 500, display: 'flex', flexDirection: 'column' }}>
+                        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <Typography variant="h6" fontWeight={600} gutterBottom>Événements</Typography>
                             {universityEvents.length > 0 ? (
-                                <Box>
+                                <Box sx={{ flex: 1, overflow: 'auto' }}>
                                     {universityEvents.map(event => (
                                         <Card key={event.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #f0f0f0' }}>
                                             <CardContent sx={{ p: 2 }}>
@@ -493,9 +620,11 @@ const UniversityDetails = () => {
                                     ))}
                                 </Box>
                             ) : (
-                                <Typography variant="body2" color="text.secondary">
-                                    Aucun événement pour cette université.
-                                </Typography>
+                                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Aucun événement pour cette université.
+                                    </Typography>
+                                </Box>
                             )}
                         </CardContent>
                     </StyledCard>
@@ -536,12 +665,6 @@ const UniversityDetails = () => {
                                         } else if (userObj.name) {
                                             userName = userObj.name;
                                             initial = userObj.name.charAt(0).toUpperCase();
-                                        } else if (userObj.nom) {
-                                            userName = userObj.nom;
-                                            initial = userObj.nom.charAt(0).toUpperCase();
-                                        } else if (userObj.username) {
-                                            userName = userObj.username;
-                                            initial = userObj.username.charAt(0).toUpperCase();
                                         } else if (userObj.email) {
                                             userName = userObj.email;
                                             initial = userObj.email.charAt(0).toUpperCase();

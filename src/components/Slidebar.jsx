@@ -15,6 +15,7 @@ import EventIcon from '@mui/icons-material/Event';
 import WorkIcon from '@mui/icons-material/Work';
 import ExploreIcon from '@mui/icons-material/Explore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
@@ -140,6 +141,12 @@ function Slidebar() {
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                             <MenuItem onClick={() => { handleMenuClose(); navigate('/home/profil'); }}>Modifier le profil</MenuItem>
                             <MenuItem onClick={() => { handleMenuClose(); navigate('/messages'); }}>Messages</MenuItem>
+                            {user?.roles?.includes('ROLE_ADMIN') && (
+                                <MenuItem onClick={() => { handleMenuClose(); navigate('/admin'); }}>
+                                    <AdminPanelSettingsIcon sx={{ mr: 1, fontSize: 20 }} />
+                                    Administration
+                                </MenuItem>
+                            )}
                         </Menu>
                     </Box>
                 )}
@@ -159,7 +166,7 @@ function Slidebar() {
                         <WorkIcon sx={{ mr: 1 }} />
                         <Typography variant="body1" >Formation</Typography>
                     </NavLink>
-                    <NavLink to="home/ event" style={navLinkStyle}>
+                    <NavLink to="/home/event" style={navLinkStyle}>
                         <EventIcon sx={{ mr: 1 }} />
                         <Typography variant="body1">Événement</Typography>
                     </NavLink>
@@ -179,9 +186,9 @@ function Slidebar() {
                             width:'100%',
                             p:1,
                             fontWeight:'bold',
-                            background: 'linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)',
+                            background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
                             '&:hover': {
-                                background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
+                                background: 'linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)',
                             },
                         }}
                     >
@@ -196,9 +203,10 @@ function Slidebar() {
                             width:'100%',
                             p:1,
                             fontWeight:'bold',
-                            background: 'linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)',
+                            background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
+                            
                             '&:hover': {
-                                background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
+                                background: 'linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)',
                             },
                         }}
                     >

@@ -17,14 +17,24 @@ import {
   Divider,
   CircularProgress,
   Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Link,
+  Tooltip,
 } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { UserContext } from "../Context/UserContext";
 import { DataContext } from "../Context/DataContext";
-import { Phone, Email, LocationOn, Cake, Person, Interests, Favorite } from "@mui/icons-material";
+import { Phone, Email, LocationOn, Cake, Person, Interests, Favorite, Bookmark as BookmarkIcon, AccessTime, People } from "@mui/icons-material";
 import axios from 'axios';
 import MuiAlert from '@mui/material/Alert';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import { isSameDay } from 'date-fns';
+import fr from 'date-fns/locale/fr';
 
 function stringAvatar(name) {
   return {
@@ -34,7 +44,7 @@ function stringAvatar(name) {
 
 export default function Profil() {
   const { user, userProfils, favorisUtilisateur, loadingFavoris, setUser, setUserProfils } = useContext(UserContext);
-  const { institutions } = useContext(DataContext);
+  const { institutions, events, eventRegistrations } = useContext(DataContext);
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -47,8 +57,13 @@ export default function Profil() {
     hobbies: "",
   });
 
+  const [userEvents, setUserEvents] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [selectedDateEvents, setSelectedDateEvents] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -70,6 +85,23 @@ export default function Profil() {
       setLoading(false);
     }
   }, [favorisUtilisateur]);
+
+  useEffect(() => {
+    if (user && eventRegistrations && events) {
+      const userRegisteredEventIds = eventRegistrations
+        .filter(reg => {
+          const userId = reg.user?.id || String(reg.user).split('/').pop();
+          return String(userId) === String(user.id);
+        })
+        .map(reg => reg.events ? String(reg.events).split('/').pop() : null)
+        .filter(Boolean);
+
+      const filteredEvents = events
+        .filter(event => userRegisteredEventIds.includes(String(event.id)) && event.eventDateTime);
+        
+      setUserEvents(filteredEvents);
+    }
+  }, [user, eventRegistrations, events]);
 
   const handleChange = (field) => (event) => {
     setFormData({ ...formData, [field]: event.target.value });
@@ -125,6 +157,69 @@ export default function Profil() {
     }
   };
 
+  const handleOpenDialog = () => setDialogOpen(true);
+  const handleCloseDialog = () => setDialogOpen(false);
+
+  const handleOpenEventDialog = (events) => {
+    setSelectedDateEvents(events);
+    setEventDialogOpen(true);
+  };
+
+  const handleCloseEventDialog = () => {
+    setEventDialogOpen(false);
+  };
+
+  const getInstitutionNameById = (id) => {
+    if (!id || !institutions || !Array.isArray(institutions)) return "Institution inconnue";
+    const institution = institutions.find(inst => String(inst.id) === String(id));
+    return institution ? institution.institution_name : "Institution non trouvée";
+  };
+
+  const renderFavoritesList = (isDialog = false) => {
+    if (loadingFavoris) {
+      return <CircularProgress />;
+    }
+    if (!favorisUtilisateur || favorisUtilisateur.length === 0) {
+      return <Typography>Vous n'avez pas encore de favoris.</Typography>;
+    }
+
+    const groupedFavorites = favorisUtilisateur.reduce((acc, fav) => {
+      const collection = fav.collection_name || 'Autres';
+      if (!acc[collection]) acc[collection] = [];
+      acc[collection].push(fav);
+      return acc;
+    }, {});
+
+    const entries = Object.entries(groupedFavorites);
+    const itemsToDisplay = isDialog ? entries : entries.slice(0, 1);
+
+    return (
+      <Stack spacing={2.5}>
+        {itemsToDisplay.map(([collection, favs]) => (
+          <Box key={collection}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <BookmarkIcon sx={{ mr: 1, color: 'text.primary', fontSize: '1.2rem' }} />
+              <Typography variant="subtitle1" fontWeight={600}>{collection}</Typography>
+            </Box>
+            <Stack spacing={1}>
+              {favs.map((fav, index) => {
+                const institutionId = fav.institution ? String(fav.institution).split('/').pop() : null;
+                const institutionName = getInstitutionNameById(institutionId);
+                return (
+                  <Card key={index} variant="outlined" sx={{ ml: 3 }}>
+                    <CardContent sx={{ py: '8px !important' }}>
+                      <Typography variant="body2">{institutionName}</Typography>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+    );
+  };
+
   if (!user) {
     return (
       <Box
@@ -154,7 +249,7 @@ export default function Profil() {
       {/* Partie gauche : formulaire profil */}
       <Box
         sx={{
-          flex: 1,
+          flex: 2,
           overflowY: "auto",
           "&::-webkit-scrollbar": { display: "none" },
         }}
@@ -265,101 +360,134 @@ export default function Profil() {
         </Box>
       </Box>
 
-      {/* Partie droite : favoris */}
-      <Box
-        sx={{
-          width: "300px",
-          overflowY: "auto",
-          borderLeft: "1px solid #eee",
-          pl: 4,
-          "&::-webkit-scrollbar": { width: "6px" },
-          "&::-webkit-scrollbar-track": { background: "#f1f1f1" },
-          "&::-webkit-scrollbar-thumb": { background: "#ddd", borderRadius: "3px" },
-        }}
-      >
-        <Typography variant="h6" fontWeight={500} mb={3} color="text.primary">
-          Vos favoris
-        </Typography>
+      {/* Partie droite : favoris et calendrier */}
+      <Box sx={{
+        flex: 1,
+        borderLeft: '1px solid #ddd',
+        pl: 4,
+        overflowY: 'auto',
+        '.custom-calendar': {
+          border: 'none',
+          width: '100%',
+        },
+        '.custom-calendar .react-calendar__tile--active': {
+          background: '#1976d2',
+          color: 'white',
+        },
+        '.custom-calendar .react-calendar__tile--now': {
+          background: '#e6f2ff',
+        },
+        '.custom-calendar .react-calendar__navigation button': {
+          minWidth: '30px',
+          fontSize: '0.8rem',
+        },
+        '.custom-calendar .react-calendar__month-view__weekdays__weekday': {
+          fontSize: '0.7rem',
+          textTransform: 'uppercase',
+        },
+        '.custom-calendar .react-calendar__tile': {
+          fontSize: '0.75rem',
+          padding: '8px 4px',
+        },
+        '.event-day': {
+          background: 'rgba(233, 30, 99, 0.15) !important',
+          borderRadius: '8px',
+        },
+      }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6" fontWeight={700} color="text.primary">
+            <Favorite sx={{ mr: 1, verticalAlign: "middle", color: "#e91e63" }} /> Mes Favoris
+          </Typography>
+          {favorisUtilisateur && favorisUtilisateur.length > 1 && (
+            <Link component="button" variant="body2" onClick={handleOpenDialog}>
+              Voir tout
+            </Link>
+          )}
+        </Box>
+        
+        {renderFavoritesList()}
 
-        {loadingFavoris ? (
-          <Box display="flex" justifyContent="center" p={3}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          (() => {
-            const userFavorites = favorisUtilisateur || [];
-
-            if (userFavorites.length === 0) {
-              return (
-                <Box sx={{ p: 3, borderRadius: 1, bgcolor: "#fafafa", color: "text.secondary", fontStyle: "italic" }}>
-                  Aucun favori pour le moment.
-                </Box>
-              );
-            }
-
-            // Grouper par collection_name
-            const grouped = {};
-            userFavorites.forEach((fav) => {
-              if (!grouped[fav.collection_name]) grouped[fav.collection_name] = [];
-              grouped[fav.collection_name].push(fav);
-            });
-           
-            return Object.entries(grouped).map(([collection, favs], idx) => (
-              
-              <Card key={idx} sx={{ bgcolor: "#fafafa", mb: 2 }}>
-                <CardContent>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                    <Favorite sx={{ color: "#ff4081", mr: 1 }} />
-                    <Typography variant="subtitle1" fontWeight={700}>{collection}</Typography>
-                  </Box>
-                  <Divider sx={{ my: 1 }} />
-                  
-                  <Stack spacing={1}>
-                    {favs.map((fav, i) => {
-                      const idInstitution = fav.institution?.split("/").pop();
-                      const institution = institutions?.member?.find(inst => String(inst.id) === idInstitution);
-                      const nomInstitution = institution?.institution_name || idInstitution;
-
-                      return (
-                        <Typography key={i} variant="body2" color="text.secondary">
-                          <li style={{listStyleType: "square"}}>
-                            {nomInstitution}
-                          </li>
-                        </Typography>
-                      );
-                    })}
-                  </Stack>
-                </CardContent>
-              </Card>
-            ));
-          })()
-        )}
+        {/* Calendrier des événements */}
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" fontWeight={700} mb={1.5} color="text.primary">
+            Mon Calendrier
+          </Typography>
+          <Card variant="outlined">
+            <CardContent>
+              <Calendar
+                locale="fr-FR"
+                onClickDay={(date) => {
+                  const eventsOnDay = userEvents.filter(event => isSameDay(date, new Date(event.eventDateTime)));
+                  if (eventsOnDay.length > 0) {
+                    handleOpenEventDialog(eventsOnDay);
+                  }
+                }}
+                tileClassName={({ date, view }) => {
+                  if (view === 'month' && userEvents.some(event => isSameDay(date, new Date(event.eventDateTime)))) {
+                    return 'event-day';
+                  }
+                  return null;
+                }}
+                className="custom-calendar"
+              />
+            </CardContent>
+          </Card>
+        </Box>
       </Box>
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={3000}
-        onClose={(_, reason) => {
-          setOpenSnackbar(false);
-          if (reason !== 'clickaway') {
-            // window.location.reload();
-          }
-        }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <MuiAlert
-          elevation={6}
-          variant="filled"
-          onClose={(_, reason) => {
-            setOpenSnackbar(false);
-            if (reason !== 'clickaway') {
-              window.location.reload();
-            }
-          }}
-          severity="success"
-          icon={<CheckCircleIcon fontSize="inherit" sx={{ color: 'white' }} />}
-          sx={{ alignItems: 'center' }}
-        >
-          Profil sauvegardé avec succès !
+      
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="xs" scroll="paper">
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+          <Favorite sx={{ mr: 1, color: "#e91e63" }} />
+          Tous mes favoris
+        </DialogTitle>
+        <DialogContent dividers>
+          {renderFavoritesList(true)}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
+      
+      <Dialog open={eventDialogOpen} onClose={handleCloseEventDialog} fullWidth maxWidth="sm">
+        <DialogTitle>
+            Événements du {selectedDateEvents.length > 0 ? new Date(selectedDateEvents[0].eventDateTime).toLocaleDateString('fr-FR') : ''}
+        </DialogTitle>
+        <DialogContent dividers>
+            <Stack spacing={2}>
+                {selectedDateEvents.map(event => (
+                    <Card key={event.id} variant="outlined">
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>{event.title || event.name}</Typography>
+                            {event.description && <Typography variant="body2" color="text.secondary" paragraph>{event.description}</Typography>}
+                            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <AccessTime sx={{ mr: 1, fontSize: '1.1rem', color: 'text.secondary' }} />
+                                    <Typography variant="body2">{new Date(event.eventDateTime).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}</Typography>
+                                </Box>
+                                {event.lieu &&
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <LocationOn sx={{ mr: 1, fontSize: '1.1rem', color: 'text.secondary' }} />
+                                        <Typography variant="body2">{event.lieu}</Typography>
+                                    </Box>
+                                }
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <People sx={{ mr: 1, fontSize: '1.1rem', color: 'text.secondary' }} />
+                                    <Typography variant="body2">Organisé par : {getInstitutionNameById(event.institution?.split('/').pop() || event.institution)}</Typography>
+                                </Box>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                ))}
+            </Stack>
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={handleCloseEventDialog}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
+      
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={() => setOpenSnackbar(false)}>
+        <MuiAlert onClose={() => setOpenSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          Profil mis à jour avec succès!
         </MuiAlert>
       </Snackbar>
     </Box>

@@ -1,0 +1,247 @@
+import React, { useContext } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Box, 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Button, 
+  IconButton, 
+  Drawer, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  ListItemText, 
+  Divider,
+  Avatar,
+  Menu,
+  MenuItem,
+  alpha
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  School as SchoolIcon,
+  Business as BusinessIcon,
+  People as PeopleIcon,
+  Settings as SettingsIcon,
+  Dashboard as DashboardIcon,
+  Logout as LogoutIcon,
+  AccountCircle as AccountCircleIcon
+} from '@mui/icons-material';
+import { UserContext } from '../Context/UserContext';
+import { motion } from 'framer-motion';
+
+const AdminLayout = () => {
+  const { user, setUser } = useContext(UserContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user_info');
+    setUser(null);
+    navigate('/login');
+  };
+
+  const menuItems = [
+    { text: 'Tableau de bord', icon: <DashboardIcon />, path: '/admin/dashboard' },
+    { text: 'Formations', icon: <SchoolIcon />, path: '/admin/formations' },
+    { text: 'Universités', icon: <BusinessIcon />, path: '/admin/universities' },
+    { text: 'Utilisateurs', icon: <PeopleIcon />, path: '/admin/users' },
+    { text: 'Paramètres', icon: <SettingsIcon />, path: '/admin/settings' },
+  ];
+
+  const handleMenuClick = (path) => {
+    navigate(path);
+    setDrawerOpen(false);
+  };
+
+  const isActiveRoute = (path) => {
+    return location.pathname === path;
+  };
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* AppBar */}
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backgroundColor: '#1a202c',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={() => setDrawerOpen(!drawerOpen)}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
+            Administration OrientMada
+          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              {user?.email}
+            </Typography>
+            <IconButton
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              sx={{ color: 'inherit' }}
+            >
+              <AccountCircleIcon />
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Drawer */}
+      <Drawer
+        variant="temporary"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        sx={{
+          width: 280,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: 280,
+            boxSizing: 'border-box',
+            backgroundColor: '#f8f9fa',
+            borderRight: '1px solid #e2e8f0'
+          },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: 'auto', mt: 2 }}>
+          <List>
+            {menuItems.map((item, index) => (
+              <motion.div
+                key={item.text}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <ListItem
+                  button
+                  onClick={() => handleMenuClick(item.path)}
+                  sx={{
+                    mx: 1,
+                    mb: 0.5,
+                    borderRadius: 2,
+                    backgroundColor: isActiveRoute(item.path) ? alpha('#667eea', 0.1) : 'transparent',
+                    color: isActiveRoute(item.path) ? '#667eea' : '#4a5568',
+                    '&:hover': {
+                      backgroundColor: alpha('#667eea', 0.05),
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: isActiveRoute(item.path) ? '#667eea' : '#718096',
+                    }
+                  }}
+                >
+                  <ListItemIcon>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={item.text} 
+                    primaryTypographyProps={{
+                      fontWeight: isActiveRoute(item.path) ? 600 : 400
+                    }}
+                  />
+                </ListItem>
+              </motion.div>
+            ))}
+          </List>
+          
+          <Divider sx={{ my: 2, mx: 2 }} />
+          
+          <List>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.6 }}
+            >
+              <ListItem
+                button
+                onClick={() => navigate('/home')}
+                sx={{
+                  mx: 1,
+                  mb: 0.5,
+                  borderRadius: 2,
+                  color: '#4a5568',
+                  '&:hover': {
+                    backgroundColor: alpha('#667eea', 0.05),
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: '#718096',
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <DashboardIcon />
+                </ListItemIcon>
+                <ListItemText primary="Retour au site" />
+              </ListItem>
+            </motion.div>
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Menu utilisateur */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 200,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+            borderRadius: 2
+          }
+        }}
+      >
+        <MenuItem onClick={() => navigate('/home/profil')}>
+          <ListItemIcon>
+            <AccountCircleIcon fontSize="small" />
+          </ListItemIcon>
+          Mon profil
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          Déconnexion
+        </MenuItem>
+      </Menu>
+
+      {/* Contenu principal */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 0,
+          width: '100%',
+          backgroundColor: '#f8f9fa',
+          minHeight: '100vh'
+        }}
+      >
+        <Toolbar />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Outlet />
+        </motion.div>
+      </Box>
+    </Box>
+  );
+};
+
+export default AdminLayout; 

@@ -1,18 +1,24 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import Register from "./pages/Register";
-import PostCard from "./components/PostCard";
-import Feed from "./components/Feed";
 import Orientation from "./pages/Orientation";
-import Story from "./components/StoryViewer";
 import University from "./pages/University";
 import Formation from "./pages/Formation";
 import UniversityDetails from "./pages/UniversityDetails";
 import Profil from "./pages/Profil";
 import Message from "./pages/Message";
 import Compare from "./pages/Compare";
+import Events from "./pages/Events";
+
+// Import des composants d'administration
+import AdminLayout from "./components/AdminLayout";
+import AdminRoute from "./components/AdminRoute";
+import Dashboard from "./pages/admin/Dashboard";
+import FormationAdmin from "./pages/admin/FormationAdmin";
+import TestAdmin from "./pages/admin/TestAdmin";
+import SimpleAdmin from "./pages/admin/SimpleAdmin";
 
 function AppRoute() {
     return (
@@ -29,6 +35,21 @@ function AppRoute() {
             <Route path="profil" element={<Profil/>}/>
             <Route path="comparer" element={<Compare/>}/>
             <Route path="message" element={<Message/>}/>
+            <Route path="event" element={<Events/>}/>
+        </Route>
+
+        {/* Routes d'administration protégées */}
+        <Route path="/admin" element={
+            <AdminRoute>
+                <AdminLayout />
+            </AdminRoute>
+        }>
+            <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="formations" element={<FormationAdmin />} />
+            <Route path="test" element={<TestAdmin />} />
+            <Route path="simple" element={<SimpleAdmin />} />
+            {/* Ajoutez d'autres routes admin ici */}
         </Route>
             
     </Routes>
