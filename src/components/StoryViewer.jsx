@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Avatar, Dialog, LinearProgress, Typography, Box, Button } from '@mui/material';
+import React, { useState, useEffect, useContext } from 'react';
+import { Avatar, Dialog, LinearProgress, Typography, Box, Button, Skeleton } from '@mui/material';
 import { Cancel } from '@mui/icons-material';
+import { DataContext } from "../context/DataContext";
 
 const stories = [
   {
@@ -30,6 +31,7 @@ const stories = [
 ];
 
 export default function StoryViewer() {
+  const { loading } = useContext(DataContext);
   const [open, setOpen] = useState(false);
   const [currentStory, setCurrentStory] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -60,50 +62,88 @@ export default function StoryViewer() {
     setCurrentStory(null);
   };
 
+  // Skeleton component for loading state
+  const StoryViewerSkeleton = () => (
+    <>
+      <Skeleton variant="text" width="30%" height={32} sx={{ mb: 2 }} />
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Box key={index} sx={{ position: 'relative' }}>
+            <Skeleton 
+              variant="rounded" 
+              width={120} 
+              height={150} 
+              sx={{ borderRadius: 2 }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                width: '100%',
+                p: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5
+              }}
+            >
+              <Skeleton variant="circular" width={24} height={24} />
+              <Skeleton variant="text" width={40} height={16} />
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </>
+  );
+
   return (
     <>
-
-      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Stories
-      </Typography>   
-      <Box sx={{ display: 'flex', gap: 2, }}>
-          
-            {stories.map((story) => (
-            <Box
-                key={story.id}
-                onClick={() => handleOpen(story)}
-                sx={{
-                    height: 150,
-                    width: 120,
-                    backgroundSize: 'cover',
-                    backgroundImage: `url(${story.image})`,
-                    borderRadius: 2,
-                    backgroundPosition: 'center',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    boxShadow: 3,
-                }}
-            >
+      {loading ? (
+        <StoryViewerSkeleton />
+      ) : (
+        <>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                  Stories
+          </Typography>   
+          <Box sx={{ display: 'flex', gap: 2, }}>
+              
+                {stories.map((story) => (
                 <Box
+                    key={story.id}
+                    onClick={() => handleOpen(story)}
                     sx={{
-                        position: 'absolute',
-                        bottom: 0,
-                        width: '100%',
-                        bgcolor: 'rgba(255, 255, 255, 0.2)',
-                        color: 'white',
-                        p: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5
+                        height: 150,
+                        width: 120,
+                        backgroundSize: 'cover',
+                        backgroundImage: `url(${story.image})`,
+                        borderRadius: 2,
+                        backgroundPosition: 'center',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: 3,
                     }}
                 >
-                    <Avatar src={story.avatar} sx={{ width: 24, height: 24 }} />
-                    <Typography variant="caption">{story.university}</Typography>
-                </Box>
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            width: '100%',
+                            bgcolor: 'rgba(255, 255, 255, 0.2)',
+                            color: 'white',
+                            p: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5
+                        }}
+                    >
+                        <Avatar src={story.avatar} sx={{ width: 24, height: 24 }} />
+                        <Typography variant="caption">{story.university}</Typography>
+                    </Box>
+                 </Box>
+                ))}
              </Box>
-            ))}
-         </Box>
+        </>
+      )}
 
       <Dialog  open={open} onClose={handleClose}>
         

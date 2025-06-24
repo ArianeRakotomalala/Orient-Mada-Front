@@ -19,7 +19,9 @@ import Dashboard from "./pages/admin/Dashboard";
 import FormationAdmin from "./pages/admin/FormationAdmin";
 import TestAdmin from "./pages/admin/TestAdmin";
 import SimpleAdmin from "./pages/admin/SimpleAdmin";
-
+import Statistics from "./pages/admin/Statistics";
+import UniversityAdmin from "./pages/admin/UniversityAdmin";
+    
 function AppRoute() {
     return (
     <Routes>
@@ -47,8 +49,10 @@ function AppRoute() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="formations" element={<FormationAdmin />} />
+            <Route path="universities" element={<UniversityAdmin />} />
             <Route path="test" element={<TestAdmin />} />
             <Route path="simple" element={<SimpleAdmin />} />
+            <Route path="statistics" element={<Statistics />} />
             {/* Ajoutez d'autres routes admin ici */}
         </Route>
             

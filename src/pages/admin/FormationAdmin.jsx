@@ -42,7 +42,7 @@ import axios from 'axios';
 const defaultImage = log;
 
 const FormationAdmin = () => {
-  const { courses, domaines, loading, refreshCourses } = useContext(DataContext);
+  const { courses, domaines, institutions, loading, refreshCourses } = useContext(DataContext);
   const { user } = useContext(UserContext);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,11 +51,14 @@ const FormationAdmin = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [confirmDelete, setConfirmDelete] = useState({ open: false, courseId: null });
   const itemsPerPage = 6;
+  const [selectedInstitution, setSelectedInstitution] = useState('');
 
   // Vérification et sécurisation des données
   const safeCourses = Array.isArray(courses) ? courses : [];
   const safeDomaines = Array.isArray(domaines) ? domaines : [];
+  const safeInstitutions = Array.isArray(institutions) ? institutions : [];
 
   // État du formulaire
   const [formData, setFormData] = useState({
@@ -63,7 +66,12 @@ const FormationAdmin = () => {
     career_prospects: '',
     prerequisites: '',
     domaine: '',
-    university: ''
+    university: '',
+    degree: '',
+    languages: '',
+    fees: '',
+    duration: '',
+    admission_process: ''
   });
 
   useEffect(() => {
@@ -71,33 +79,31 @@ const FormationAdmin = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Grouper les formations par titre pour éviter les doublons
-  const uniqueCoursesByName = (safeCourses || []).reduce((acc, course) => {
-    if (course && course.title) {
-      const title = course.title.trim();
-      if (!acc[title]) {
-        acc[title] = course;
-      }
-    }
+  // 1. Filtrer par recherche et domaine et université
+  const filteredCourses = safeCourses.filter(course =>
+    (!searchQuery || course.title.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (!selectedDomain || (course.domaine ? String(course.domaine).split('/').pop() : null) === String(selectedDomain)) &&
+    (!selectedInstitution || (
+      (() => {
+        let univId = '';
+        if (typeof course.institutions === 'object' && course.institutions !== null && course.institutions.id) {
+          univId = course.institutions.id;
+        } else if (typeof course.institutions === 'string' && course.institutions.includes('/')) {
+          univId = course.institutions.split('/').pop();
+        } else if (typeof course.institutions === 'string') {
+          univId = course.institutions;
+        }
+        return String(univId) === String(selectedInstitution);
+      })()
+    ))
+  );
+
+  // 2. Regrouper par titre pour l'affichage
+  const coursesByTitle = filteredCourses.reduce((acc, course) => {
+    if (!acc[course.title]) acc[course.title] = [];
+    acc[course.title].push(course);
     return acc;
   }, {});
-
-  const uniqueCourses = Object.values(uniqueCoursesByName);
-
-  // Filtrer par recherche
-  const searchedCourses = searchQuery
-    ? uniqueCourses.filter(course =>
-        course.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : uniqueCourses;
-  
-  // Filtrer par domaine
-  const domainFilteredCourses = selectedDomain
-    ? searchedCourses.filter(course => {
-        const domainId = course.domaine ? String(course.domaine).split('/').pop() : null;
-        return String(domainId) === String(selectedDomain);
-    })
-    : searchedCourses;
 
   // Logique de pagination
   const handlePageChange = (event, value) => {
@@ -115,7 +121,12 @@ const FormationAdmin = () => {
     setCurrentPage(1);
   };
 
-  const paginatedCourses = domainFilteredCourses.slice(
+  const paginatedCourses = coursesByTitle[Object.keys(coursesByTitle)[0]] || [];
+
+  // Pagination par groupe de titres
+  const titleKeys = Object.keys(coursesByTitle);
+  const totalPages = Math.ceil(titleKeys.length / itemsPerPage);
+  const paginatedTitleKeys = titleKeys.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -129,8 +140,23 @@ const FormationAdmin = () => {
         career_prospects: course.career_prospects || '',
         prerequisites: course.prerequisites || '',
         domaine: course.domaine ? String(course.domaine).split('/').pop() : '',
-        university: course.university || ''
+        university: (() => {
+          if (typeof course.institutions === 'object' && course.institutions !== null && course.institutions.id) {
+            return course.institutions.id;
+          } else if (typeof course.institutions === 'string' && course.institutions.includes('/')) {
+            return course.institutions.split('/').pop();
+          } else if (typeof course.institutions === 'string') {
+            return course.institutions;
+          }
+          return '';
+        })(),
+        degree: course.degree || '',
+        languages: course.languages || '',
+        fees: course.fees || '',
+        duration: course.duration || '',
+        admission_process: course.admission_process || ''
       });
+      setOpenDialog(true);
     } else {
       setEditingCourse(null);
       setFormData({
@@ -138,10 +164,15 @@ const FormationAdmin = () => {
         career_prospects: '',
         prerequisites: '',
         domaine: '',
-        university: ''
+        university: '',
+        degree: '',
+        languages: '',
+        fees: '',
+        duration: '',
+        admission_process: ''
       });
+      setOpenDialog(true);
     }
-    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
@@ -152,7 +183,12 @@ const FormationAdmin = () => {
       career_prospects: '',
       prerequisites: '',
       domaine: '',
-      university: ''
+      university: '',
+      degree: '',
+      languages: '',
+      fees: '',
+      duration: '',
+      admission_process: ''
     });
   };
 
@@ -170,7 +206,12 @@ const FormationAdmin = () => {
         career_prospects: formData.career_prospects,
         prerequisites: formData.prerequisites,
         domaine: formData.domaine ? `/api/domaines/${formData.domaine}` : null,
-        university: formData.university
+        institutions: formData.university ? `/api/institutions/${formData.university}` : null,
+        degree: formData.degree,
+        languages: formData.languages,
+        fees: formData.fees,
+        duration: formData.duration,
+        admission_process: formData.admission_process
       };
 
       if (editingCourse) {
@@ -200,16 +241,26 @@ const FormationAdmin = () => {
   };
 
   const handleDelete = async (courseId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
-      try {
-        await axios.delete(`/api/courses/${courseId}`);
-        setSnackbar({ open: true, message: 'Formation supprimée avec succès', severity: 'success' });
-        refreshCourses(); // Rafraîchir les données
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-        setSnackbar({ open: true, message: 'Erreur lors de la suppression', severity: 'error' });
-      }
+    setConfirmDelete({ open: true, courseId });
+  };
+
+  const handleConfirmDelete = async () => {
+    const courseId = confirmDelete.courseId;
+    if (!courseId) return;
+    try {
+      await axios.delete(`/api/courses/${courseId}`);
+      setSnackbar({ open: true, message: 'Formation supprimée avec succès', severity: 'success' });
+      refreshCourses();
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      setSnackbar({ open: true, message: 'Erreur lors de la suppression', severity: 'error' });
+    } finally {
+      setConfirmDelete({ open: false, courseId: null });
     }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDelete({ open: false, courseId: null });
   };
 
   if (isPageLoading) {
@@ -234,9 +285,9 @@ const FormationAdmin = () => {
     <Box sx={{ p: 4, background: '#f8f9fa', minHeight: '100vh' }}>
       <PageTitle 
         title="Administration des Formations"
-        subtitle="Gérez toutes les formations proposées par les universités malgaches. Ajoutez, modifiez ou supprimez des formations."
-        icon={SchoolIcon}
-        color="#667eea"
+        subtitle="Gérez toutes les formations proposées par les universités et établissements. Ajoutez, modifiez ou supprimez des formations."
+        icon={WorkIcon}
+        color="linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)"
       />
       
       <motion.div
@@ -312,6 +363,40 @@ const FormationAdmin = () => {
               </Select>
             </FormControl>
           </Box>
+          <Box sx={{ flex: 1, minWidth: 240 }}>
+            <FormControl 
+              fullWidth 
+              variant="outlined"
+              sx={{
+                borderRadius: 1,
+                backgroundColor: alpha('#000', 0.05),
+                '&:hover': {
+                  backgroundColor: alpha('#000', 0.08),
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+              }}
+            >
+              <InputLabel id="institution-filter-label">Filtrer par université</InputLabel>
+              <Select
+                labelId="institution-filter-label"
+                value={selectedInstitution}
+                label="Filtrer par université"
+                onChange={e => {
+                  setSelectedInstitution(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="">
+                  <em>Toutes les universités</em>
+                </MenuItem>
+                {safeInstitutions && safeInstitutions.map((inst) => (
+                  <MenuItem key={inst.id} value={inst.id}>{inst.institution_name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -335,134 +420,174 @@ const FormationAdmin = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
       >
-        <Grid container spacing={3}>
-          {paginatedCourses.map((course) => (
-            <Grid item key={course.id} sx={{ display: 'flex' }}>
-              <Card 
-                sx={{ 
-                  width: 355,
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  background: 'white',
-                  borderRadius: 2,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              px: 3,
+              py: 1,
+              borderRadius: 3,
+              textAlign: 'center',
+              minWidth: 120,
+              background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            {titleKeys.length} résultat{titleKeys.length > 1 ? 's' : ''}
+          </Typography>
+        </Box>
+        {paginatedTitleKeys.map((title) => {
+          const courses = coursesByTitle[title];
+          return (
+            <Box key={title} sx={{ mb: 5 }}>
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#2d3748', mb: 2 }}>{title}</Typography>
+              <Grid container spacing={3}>
+                {courses.map((course) => {
+                  let univId = '';
+                  if (typeof course.institutions === 'object' && course.institutions !== null && course.institutions.id) {
+                    univId = course.institutions.id;
+                  } else if (typeof course.institutions === 'string' && course.institutions.includes('/')) {
+                    univId = course.institutions.split('/').pop();
+                  } else if (typeof course.institutions === 'string') {
+                    univId = course.institutions;
                   }
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2, p: 3 }}>
-                  {/* En-tête avec actions */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
-                      <SchoolIcon sx={{ color: '#667eea', fontSize: 24, mt: 0.5, flexShrink: 0 }} />
-                      <Typography 
-                        variant="h6" 
-                        fontWeight={600} 
+                  const inst = safeInstitutions.find(i => String(i.id) === String(univId));
+                  const instLogo = inst && inst.logo ? inst.logo : defaultImage;
+                  return (
+                    <Grid item key={course.id} sx={{ display: 'flex' }}>
+                      <Card 
                         sx={{ 
-                          color: '#2d3748',
-                          lineHeight: 1.3,
-                          fontSize: '1.2rem',
-                          wordWrap: 'break-word',
-                          overflowWrap: 'break-word',
-                          hyphens: 'auto'
+                          width: 355,
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          background: 'white',
+                          borderRadius: 4,
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                          transition: 'all 0.3s cubic-bezier(.25,.8,.25,1)',
+                          mb: 2,
+                          '&:hover': {
+                            transform: 'translateY(-8px) scale(1.03)',
+                            boxShadow: '0 12px 32px rgba(102,126,234,0.18)',
+                          },
+                          overflow: 'hidden',
                         }}
                       >
-                        {course.title}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <Tooltip title="Modifier">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleOpenDialog(course)}
-                          sx={{ color: '#667eea' }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Supprimer">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleDelete(course.id)}
-                          sx={{ color: '#e53e3e' }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-
-                  {/* Débouchés */}
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mt: 2 }}>
-                    <WorkIcon sx={{ color: '#764ba2', fontSize: 18, mt: 0.5, flexShrink: 0 }} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: '#4a5568',
-                          fontWeight: 600,
-                          mb: 1,
-                          fontSize: '0.9rem'
-                        }}
-                      >
-                        Débouchés :
-                      </Typography>
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: '#718096',
-                          lineHeight: 1.5,
-                          fontSize: '0.85rem',
-                          wordWrap: 'break-word',
-                          overflowWrap: 'break-word',
-                          hyphens: 'auto',
-                          textAlign: 'justify'
-                        }}
-                      >
-                        {course.career_prospects || 'Débouchés non spécifiés'}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Prérequis */}
-                  {course.prerequisites && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: '#4a5568',
-                          fontWeight: 600,
-                          mb: 0.5,
-                          fontSize: '0.85rem'
-                        }}
-                      >
-                        Prérequis :
-                      </Typography>
-                      <Chip 
-                        label={course.prerequisites} 
-                        size="small" 
-                        sx={{ 
-                          backgroundColor: alpha('#667eea', 0.1),
-                          color: '#667eea',
-                          fontSize: '0.75rem'
-                        }} 
-                      />
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                        {/* Logo université */}
+                        <Box sx={{ width: '100%', height: 90, background: '#f3f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid #eee' }}>
+                          <img src={instLogo} alt="logo université" style={{ maxHeight: 60, maxWidth: 120, objectFit: 'contain', borderRadius: 8 }} />
+                        </Box>
+                        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2, p: 3 }}>
+                          {/* Titre formation accentué */}
+                          <Box sx={{
+                            background: 'linear-gradient(90deg,rgb(222, 188, 188) 0%,rgb(248, 207, 233) 100%)',
+                            borderRadius: 2,
+                            px: 2,
+                            py: 1,
+                            mb: 1,
+                            display: 'inline-block',
+                            alignSelf: 'flex-start',
+                            boxShadow: '0 2px 8px rgba(183,120,120,0.08)',
+                          }}>
+                            <Typography variant="h6" fontWeight={700} sx={{ color: 'white', letterSpacing: 0.5 }}>
+                              {title}
+                            </Typography>
+                          </Box>
+                          {/* Université */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <SchoolIcon sx={{ color: '#667eea', fontSize: 22, flexShrink: 0 }} />
+                            <Typography 
+                              variant="subtitle2" 
+                              fontWeight={600} 
+                              sx={{ color: '#667eea', fontSize: '1rem', wordBreak: 'break-word' }}
+                            >
+                              {inst ? inst.institution_name : 'Université inconnue'}
+                            </Typography>
+                          </Box>
+                          {/* Débouchés */}
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mt: 1 }}>
+                            <WorkIcon sx={{ color: '#764ba2', fontSize: 18, mt: 0.5, flexShrink: 0 }} />
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ color: '#4a5568', fontWeight: 600, mb: 0.5 }}
+                              >
+                                Débouchés :
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ color: '#718096', lineHeight: 1.5, fontSize: '0.95rem', wordWrap: 'break-word', textAlign: 'justify' }}
+                              >
+                                {course.career_prospects || 'Débouchés non spécifiés'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          {/* Chips infos clés */}
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                            <Chip label={`Durée: ${course.duration || 'Non spécifiée'}`} size="small" sx={{ backgroundColor: alpha('#667eea', 0.08), color: '#667eea', fontWeight: 600 }} />
+                            <Chip label={`Frais: ${course.fees || 'Non spécifié'}`} size="small" sx={{ backgroundColor: alpha('#B67878', 0.08), color: '#B67878', fontWeight: 600 }} />
+                            <Chip label={`Diplôme: ${course.degree || 'Non spécifié'}`} size="small" sx={{ backgroundColor: alpha('#764ba2', 0.08), color: '#764ba2', fontWeight: 600 }} />
+                            <Chip label={`Langues: ${course.languages || 'Non spécifiées'}`} size="small" sx={{ backgroundColor: alpha('#2d3748', 0.08), color: '#2d3748', fontWeight: 600 }} />
+                          </Box>
+                          {/* Prérequis */}
+                          {course.prerequisites && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ color: '#4a5568', fontWeight: 600, mb: 0.5 }}
+                              >
+                                Prérequis :
+                              </Typography>
+                              <Chip 
+                                label={course.prerequisites} 
+                                size="small" 
+                                sx={{ backgroundColor: alpha('#667eea', 0.13), color: '#667eea', fontSize: '0.85rem' }} 
+                              />
+                            </Box>
+                          )}
+                          {/* Procédure d'admission */}
+                          <Typography variant="body2" sx={{ mt: 2, color: '#4a5568' }}>
+                            <b>Procédure d'admission :</b> {course.admission_process || 'Non spécifiée'}
+                          </Typography>
+                          {/* Actions */}
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
+                            <Tooltip title="Modifier">
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleOpenDialog(course)}
+                                sx={{ color: '#667eea' }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Supprimer">
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleDelete(course.id)}
+                                sx={{ color: '#e53e3e' }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+          );
+        })}
       </motion.div>
       
-      {domainFilteredCourses.length > itemsPerPage && (
+      {totalPages > 1 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5, py: 2 }}>
-          <Pagination 
-            count={Math.ceil(domainFilteredCourses.length / itemsPerPage)}
+          <Pagination
+            count={totalPages}
             page={currentPage}
             onChange={handlePageChange}
             color="primary"
@@ -527,11 +652,50 @@ const FormationAdmin = () => {
                 ))}
               </Select>
             </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Université</InputLabel>
+              <Select
+                value={formData.university}
+                label="Université"
+                onChange={(e) => handleFormChange('university', e.target.value)}
+              >
+                {safeInstitutions && safeInstitutions.map((inst) => (
+                  <MenuItem key={inst.id} value={inst.id}>{inst.institution_name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
-              label="Université"
-              value={formData.university}
-              onChange={(e) => handleFormChange('university', e.target.value)}
+              label="Diplôme (degree)"
+              value={formData.degree}
+              onChange={(e) => handleFormChange('degree', e.target.value)}
               fullWidth
+            />
+            <TextField
+              label="Langues (séparées par une virgule)"
+              value={formData.languages}
+              onChange={(e) => handleFormChange('languages', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Frais par an (Ariary)"
+              value={formData.fees}
+              onChange={(e) => handleFormChange('fees', e.target.value)}
+              fullWidth
+              type="number"
+            />
+            <TextField
+              label="Durée (ex: 3 ans)"
+              value={formData.duration}
+              onChange={(e) => handleFormChange('duration', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Procédure d'admission"
+              value={formData.admission_process}
+              onChange={(e) => handleFormChange('admission_process', e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
             />
           </Box>
         </DialogContent>
@@ -557,6 +721,18 @@ const FormationAdmin = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Dialog de confirmation de suppression */}
+      <Dialog open={confirmDelete.open} onClose={handleCancelDelete}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography>Êtes-vous sûr de vouloir supprimer cette formation ? Cette action est irréversible.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Annuler</Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained">Supprimer</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

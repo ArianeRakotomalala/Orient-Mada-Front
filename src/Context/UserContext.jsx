@@ -3,8 +3,22 @@ import axios from "axios";
 
 export const UserContext = createContext();
 
+const getInitialUser = () => {
+  try {
+    const userInfo = localStorage.getItem("user_info");
+    if (userInfo) {
+      return JSON.parse(userInfo);
+    }
+  } catch (error) {
+    console.error("Erreur lors de la lecture du localStorage :", error);
+    // En cas d'erreur de parsing, nettoyer le localStorage
+    localStorage.removeItem("user_info");
+  }
+  return null;
+};
+
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getInitialUser);
   const [favoris, setFavoris] = useState([]);
   const [userProfils, setUserProfils] = useState(null);
   const [loadingFavoris, setLoadingFavoris] = useState(false);
@@ -101,41 +115,23 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    try {
-      const userInfo = localStorage.getItem("user_info");
-      if (!userInfo) {
-        console.log("Aucun utilisateur connecté");
-        return;
-      }
-
-      const connectedUser = JSON.parse(userInfo);
-      if (!connectedUser) {
-        console.log("Données utilisateur invalides");
-        return;
-      }
-
-      setUser(connectedUser);
-
-      // Chargement du profil utilisateur lié à l'utilisateur connecté
-      axios
-        .get('/api/users_profils', { params: { user: `/api/users/${connectedUser.id}` } })
-        .then((response) => {
-          let profils = response.data['hydra:member'] || response.data.member || [];
-          // Filtrer pour ne garder que le profil du user connecté
-          profils = profils.filter(p => p.user === `/api/users/${connectedUser.id}`);
-          setUserProfils(profils.length > 0 ? profils[0] : null);
-          console.log(profils);
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement du profil utilisateur :", error);
-          setUserProfils(null);
-        });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des données utilisateur :", error);
-      // Nettoyer le localStorage si les données sont corrompues
-      localStorage.removeItem("user_info");
-    }
-  }, []);
+    if (!user) return; // Si aucun utilisateur n'est connecté, ne rien faire
+    
+    // Chargement du profil utilisateur lié à l'utilisateur connecté
+    axios
+      .get('/api/users_profils', { params: { user: `/api/users/${user.id}` } })
+      .then((response) => {
+        let profils = response.data['hydra:member'] || response.data.member || [];
+        // Filtrer pour ne garder que le profil du user connecté
+        profils = profils.filter(p => p.user === `/api/users/${user.id}`);
+        setUserProfils(profils.length > 0 ? profils[0] : null);
+        console.log(profils);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement du profil utilisateur :", error);
+        setUserProfils(null);
+      });
+  }, [user]);
 
   useEffect(() => {
     if (user?.id) {

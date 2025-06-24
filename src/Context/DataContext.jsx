@@ -32,8 +32,19 @@ export const DataProvider = ({ children }) => {
         setInstitutions(institutionsRes.data['hydra:member'] || institutionsRes.data.member || institutionsRes.data || []);
         setCourses(coursesRes.data.member);
         console.log("coursesRes.data.member", coursesRes.data.member);
-        setEvents(eventsRes.data.member);
-        console.log("Événements chargés initialement:", eventsRes.data.member);
+        // Correction robuste pour supporter plusieurs formats de réponse
+        let eventsArray = [];
+        if (Array.isArray(eventsRes.data)) {
+          eventsArray = eventsRes.data;
+        } else if (Array.isArray(eventsRes.data['hydra:member'])) {
+          eventsArray = eventsRes.data['hydra:member'];
+        } else if (Array.isArray(eventsRes.data.member)) {
+          eventsArray = eventsRes.data.member;
+        } else {
+          console.error("Format inattendu pour la réponse des événements :", eventsRes.data);
+        }
+        setEvents(eventsArray);
+        console.log("Événements chargés initialement:", eventsArray);
         setEventRegistrations(eventRegistrationsRes.data.member);
         setUsers(usersRes.data['hydra:member'] || usersRes.data.member || []);
         setDomaines(domainesRes.data.member || domainesRes.data['hydra:member'] || []);
@@ -66,10 +77,19 @@ export const DataProvider = ({ children }) => {
     try {
       console.log("Rafraîchissement des événements...");
       const eventsRes = await axios.get("/api/events");
-      console.log("Événements reçus:", eventsRes.data);
-      console.log("Événements member:", eventsRes.data.member);
-      setEvents(eventsRes.data.member || []);
-      console.log("Événements mis à jour dans le state");
+      // Correction robuste pour supporter plusieurs formats de réponse
+      let eventsArray = [];
+      if (Array.isArray(eventsRes.data)) {
+        eventsArray = eventsRes.data;
+      } else if (Array.isArray(eventsRes.data['hydra:member'])) {
+        eventsArray = eventsRes.data['hydra:member'];
+      } else if (Array.isArray(eventsRes.data.member)) {
+        eventsArray = eventsRes.data.member;
+      } else {
+        console.error("Format inattendu pour la réponse des événements (refresh) :", eventsRes.data);
+      }
+      setEvents(eventsArray);
+      console.log("Événements mis à jour dans le state", eventsArray);
     } catch (error) {
       console.error("Erreur lors du rafraîchissement des événements :", error);
       console.error("Détails de l'erreur:", error.response?.data);

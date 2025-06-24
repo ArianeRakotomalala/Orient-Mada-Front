@@ -140,17 +140,18 @@ function PostCard({ id, description, ville, region, srcimage, university, collec
                         color="primary"
                         startIcon={<SchoolIcon />}
                         sx={{
-                            background: 'linear-gradient(90deg, #4F8DFD 0%, #38C6D9 100%)',
-                            borderRadius: '30px',
+                            background: '#f5f5f5',
+                            borderRadius: '40px',
                             fontWeight: 'bold',
-                            px: 3,
-                            py: 1.2,
                             fontSize: 16,
-                            boxShadow: '0 2px 8px rgba(79,141,253,0.15)',
                             textTransform: 'none',
+                            color: 'black',
+                            border: '1px solid transparent',
+                            transition: 'all 0.3s',
                             '&:hover': {
-                                background: 'linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)',
-                                color: '#fff',
+                                border: '1px solid #B67878',
+                                color: '#B67878',
+                                background: '#f5f5f5',
                             },
                         }}
                         onClick={() => navigate(`/home/university/${id}`)}

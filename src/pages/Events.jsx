@@ -119,9 +119,9 @@ const Events = () => {
 
   // Fonction pour déterminer le statut de l'événement
   const getEventStatus = (event) => {
-    if (!event.eventDateTime) return 'À venir';
+    if (!event.event_date_time) return 'À venir';
     
-    const eventDate = new Date(event.eventDateTime);
+    const eventDate = new Date(event.event_date_time);
     const now = new Date();
     
     if (eventDate < now) {
@@ -164,8 +164,8 @@ const Events = () => {
       }
       
       // Si les statuts sont identiques, trier par date (plus proche en premier)
-      const dateA = a.eventDateTime ? new Date(a.eventDateTime) : new Date(0);
-      const dateB = b.eventDateTime ? new Date(b.eventDateTime) : new Date(0);
+      const dateA = a.event_date_time ? new Date(a.event_date_time) : new Date(0);
+      const dateB = b.event_date_time ? new Date(b.event_date_time) : new Date(0);
       
       return dateA - dateB;
     });
@@ -229,6 +229,11 @@ const Events = () => {
   const endIndex = startIndex + eventsPerPage;
   const currentEvents = sortedEvents?.slice(startIndex, endIndex) || [];
 
+  // Ajout d'un log pour diagnostiquer la structure d'un événement
+  if (events && events.length > 0) {
+    console.log("Exemple d'événement :", events[0]);
+  }
+
   // Gestion du changement de page
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
@@ -275,10 +280,10 @@ const Events = () => {
       
       <Box maxWidth="lg" mx="auto" position="relative">
         <PageTitle 
-          title="Événements éducatifs"
-          subtitle="Découvrez tous les événements éducatifs, salons, portes ouvertes et conférences organisés par les universités et institutions d'enseignement supérieur de Madagascar."
+          title="Événements à Madagascar"
+          subtitle="Retrouvez tous les événements académiques, conférences et rencontres universitaires à Madagascar."
           icon={EventIcon}
-          color="#ff6b35"
+          color="linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)"
         />
 
         {/* Information sur les événements */}
@@ -364,7 +369,7 @@ const Events = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AccessTimeIcon sx={{ color: '#ff6b35', fontSize: 20 }} />
                       <Typography variant="body2" sx={{ color: '#666666', fontWeight: 500 }}>
-                          {formatEventDate(event.eventDateTime)}
+                          {formatEventDate(event.event_date_time)}
                       </Typography>
                     </Box>
                     

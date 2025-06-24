@@ -16,7 +16,9 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  alpha
+  alpha,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -31,12 +33,23 @@ import {
 import { UserContext } from '../Context/UserContext';
 import { motion } from 'framer-motion';
 
+const drawerWidth = 280;
+
 const AdminLayout = () => {
   const { user, setUser } = useContext(UserContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+
+  const handleDrawerToggle = () => {
+    if (!isDesktop) {
+      setMobileOpen(!mobileOpen);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user_info');
@@ -54,12 +67,92 @@ const AdminLayout = () => {
 
   const handleMenuClick = (path) => {
     navigate(path);
-    setDrawerOpen(false);
+    if (!isDesktop) {
+      setMobileOpen(false);
+    }
   };
 
   const isActiveRoute = (path) => {
     return location.pathname === path;
   };
+
+  const drawerContent = (
+    <>
+      <Toolbar />
+      <Box sx={{ overflowY: 'auto', overflowX: 'hidden', mt: 2 }}>
+        <List>
+          {menuItems.map((item, index) => (
+            <motion.div
+              key={item.text}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+            >
+              <ListItem
+                button
+                onClick={() => handleMenuClick(item.path)}
+                sx={{
+                  mx: 1,
+                  mb: 0.5,
+                  borderRadius: 2,
+                  backgroundColor: isActiveRoute(item.path) ? alpha('#667eea', 0.1) : 'transparent',
+                  color: isActiveRoute(item.path) ? '#667eea' : '#4a5568',
+                  '&:hover': {
+                    backgroundColor: alpha('#667eea', 0.05),
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: isActiveRoute(item.path) ? '#667eea' : '#718096',
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  primaryTypographyProps={{
+                    fontWeight: isActiveRoute(item.path) ? 600 : 400
+                  }}
+                />
+              </ListItem>
+            </motion.div>
+          ))}
+        </List>
+        
+        <Divider sx={{ my: 2, mx: 2 }} />
+        
+        <List>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.6 }}
+          >
+            <ListItem
+              button
+              onClick={() => navigate('/home')}
+              sx={{
+                mx: 1,
+                mb: 0.5,
+                borderRadius: 2,
+                color: '#4a5568',
+                '&:hover': {
+                  backgroundColor: alpha('#667eea', 0.05),
+                },
+                '& .MuiListItemIcon-root': {
+                  color: '#718096',
+                }
+              }}
+            >
+              <ListItemIcon>
+                <DashboardIcon />
+              </ListItemIcon>
+              <ListItemText primary="Retour au site" />
+            </ListItem>
+          </motion.div>
+        </List>
+      </Box>
+    </>
+  );
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -76,8 +169,8 @@ const AdminLayout = () => {
           <IconButton
             color="inherit"
             edge="start"
-            onClick={() => setDrawerOpen(!drawerOpen)}
-            sx={{ mr: 2 }}
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
@@ -101,95 +194,27 @@ const AdminLayout = () => {
       </AppBar>
 
       {/* Drawer */}
-      <Drawer
-        variant="temporary"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        sx={{
-          width: 280,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: 280,
-            boxSizing: 'border-box',
-            backgroundColor: '#f8f9fa',
-            borderRight: '1px solid #e2e8f0'
-          },
-        }}
+      <Box
+        component="nav"
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
       >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto', mt: 2 }}>
-          <List>
-            {menuItems.map((item, index) => (
-              <motion.div
-                key={item.text}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <ListItem
-                  button
-                  onClick={() => handleMenuClick(item.path)}
-                  sx={{
-                    mx: 1,
-                    mb: 0.5,
-                    borderRadius: 2,
-                    backgroundColor: isActiveRoute(item.path) ? alpha('#667eea', 0.1) : 'transparent',
-                    color: isActiveRoute(item.path) ? '#667eea' : '#4a5568',
-                    '&:hover': {
-                      backgroundColor: alpha('#667eea', 0.05),
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: isActiveRoute(item.path) ? '#667eea' : '#718096',
-                    }
-                  }}
-                >
-                  <ListItemIcon>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    primaryTypographyProps={{
-                      fontWeight: isActiveRoute(item.path) ? 600 : 400
-                    }}
-                  />
-                </ListItem>
-              </motion.div>
-            ))}
-          </List>
-          
-          <Divider sx={{ my: 2, mx: 2 }} />
-          
-          <List>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.6 }}
-            >
-              <ListItem
-                button
-                onClick={() => navigate('/home')}
-                sx={{
-                  mx: 1,
-                  mb: 0.5,
-                  borderRadius: 2,
-                  color: '#4a5568',
-                  '&:hover': {
-                    backgroundColor: alpha('#667eea', 0.05),
-                  },
-                  '& .MuiListItemIcon-root': {
-                    color: '#718096',
-                  }
-                }}
-              >
-                <ListItemIcon>
-                  <DashboardIcon />
-                </ListItemIcon>
-                <ListItemText primary="Retour au site" />
-              </ListItem>
-            </motion.div>
-          </List>
-        </Box>
-      </Drawer>
+        <Drawer
+          variant={isDesktop ? 'permanent' : 'temporary'}
+          open={isDesktop ? true : mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              backgroundColor: '#f8f9fa',
+              borderRight: '1px solid #e2e8f0'
+            },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
 
       {/* Menu utilisateur */}
       <Menu
@@ -225,10 +250,8 @@ const AdminLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 0,
-          width: '100%',
-          backgroundColor: '#f8f9fa',
-          minHeight: '100vh'
+          p: 3,
+          backgroundColor: '#f8f9fa'
         }}
       >
         <Toolbar />

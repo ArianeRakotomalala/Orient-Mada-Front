@@ -3,6 +3,8 @@ import { Box, Typography, Fade, Zoom } from '@mui/material';
 import { motion } from 'framer-motion';
 
 const PageTitle = ({ title, subtitle, icon: Icon, color = '#667eea' }) => {
+  const isGradient = color.startsWith('linear-gradient');
+
   return (
     <Box sx={{ 
       textAlign: 'center', 
@@ -47,16 +49,16 @@ const PageTitle = ({ title, subtitle, icon: Icon, color = '#667eea' }) => {
                 <Box sx={{
                   p: 2,
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${color}20, ${color}10)`,
-                  border: `2px solid ${color}30`,
+                  background: isGradient ? color : `linear-gradient(135deg, ${color}20, ${color}10)`,
+                  border: isGradient ? undefined : `2px solid ${color}30`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 8px 32px ${color}20`
+                  boxShadow: isGradient ? undefined : `0 8px 32px ${color}20`
                 }}>
                   <Icon sx={{ 
                     fontSize: 40, 
-                    color: color,
+                    color: isGradient ? '#fff' : color,
                     filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
                   }} />
                 </Box>
@@ -80,7 +82,6 @@ const PageTitle = ({ title, subtitle, icon: Icon, color = '#667eea' }) => {
               fontWeight={900} 
               sx={{ 
                 mb: 2,
-                color: '#333333',
                 fontSize: { xs: '1.75rem', md: '2.45rem' },
                 letterSpacing: '-0.02em',
                 position: 'relative',
@@ -93,7 +94,7 @@ const PageTitle = ({ title, subtitle, icon: Icon, color = '#667eea' }) => {
                   transform: 'translateX(-50%)',
                   width: '120px',
                   height: '4px',
-                  background: `linear-gradient(90deg, ${color}, ${color}80)`,
+                  background: isGradient ? color : `linear-gradient(90deg, ${color}, ${color}80)`,
                   borderRadius: '2px',
                   animation: 'slideIn 1s ease-out 0.8s both'
                 }

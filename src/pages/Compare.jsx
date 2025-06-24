@@ -240,10 +240,10 @@ export default function Compare() {
       
       <Box maxWidth="lg" mx="auto" mb={4} position="relative">
         <PageTitle 
-          title="Comparaison d'universités"
-          subtitle="Notre plateforme vous permet de comparer deux établissements côte à côte afin de mieux comprendre leurs spécificités : les filières proposées, les frais de scolarité, les conditions d'admission, les débouchés, la durée des formations, et bien plus encore."
+          title="Comparer les universités"
+          subtitle="Comparez les universités et formations pour faire le meilleur choix."
           icon={CompareArrowsIcon}
-          color="#667eea"
+          color="linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)"
         />
       </Box>
 

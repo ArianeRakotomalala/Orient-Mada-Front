@@ -97,7 +97,7 @@ export default function Profil() {
         .filter(Boolean);
 
       const filteredEvents = events
-        .filter(event => userRegisteredEventIds.includes(String(event.id)) && event.eventDateTime);
+        .filter(event => userRegisteredEventIds.includes(String(event.id)) && event.event_date_time);
         
       setUserEvents(filteredEvents);
     }
@@ -417,13 +417,13 @@ export default function Profil() {
               <Calendar
                 locale="fr-FR"
                 onClickDay={(date) => {
-                  const eventsOnDay = userEvents.filter(event => isSameDay(date, new Date(event.eventDateTime)));
+                  const eventsOnDay = userEvents.filter(event => isSameDay(date, new Date(event.event_date_time)));
                   if (eventsOnDay.length > 0) {
                     handleOpenEventDialog(eventsOnDay);
                   }
                 }}
                 tileClassName={({ date, view }) => {
-                  if (view === 'month' && userEvents.some(event => isSameDay(date, new Date(event.eventDateTime)))) {
+                  if (view === 'month' && userEvents.some(event => isSameDay(date, new Date(event.event_date_time)))) {
                     return 'event-day';
                   }
                   return null;
@@ -450,7 +450,7 @@ export default function Profil() {
       
       <Dialog open={eventDialogOpen} onClose={handleCloseEventDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-            Événements du {selectedDateEvents.length > 0 ? new Date(selectedDateEvents[0].eventDateTime).toLocaleDateString('fr-FR') : ''}
+            Événements du {selectedDateEvents.length > 0 ? new Date(selectedDateEvents[0].event_date_time).toLocaleDateString('fr-FR') : ''}
         </DialogTitle>
         <DialogContent dividers>
             <Stack spacing={2}>
@@ -462,7 +462,7 @@ export default function Profil() {
                             <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <AccessTime sx={{ mr: 1, fontSize: '1.1rem', color: 'text.secondary' }} />
-                                    <Typography variant="body2">{new Date(event.eventDateTime).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}</Typography>
+                                    <Typography variant="body2">{new Date(event.event_date_time).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}</Typography>
                                 </Box>
                                 {event.lieu &&
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>

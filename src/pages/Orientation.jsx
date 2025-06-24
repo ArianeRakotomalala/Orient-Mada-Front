@@ -35,6 +35,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SchoolIcon from '@mui/icons-material/School';
 import PageTitle from '../components/PageTitle';
+import QuizIcon from '@mui/icons-material/Quiz';
 
 function Orientation() {
   const { user, userProfils } = useContext(UserContext);
@@ -294,10 +295,10 @@ function Orientation() {
       backgroundColor: '#f7fafd' }}>
       
       <PageTitle 
-        title="Test d'orientation"
-        subtitle="Ce test est conçu pour vous aider à découvrir les filières qui correspondent le mieux à votre profil. Répondez honnêtement pour une expérience personnalisée."
-        icon={SchoolIcon}
-        color="#667eea"
+        title="Test d'Orientation"
+        subtitle="Répondez au questionnaire pour découvrir les filières qui vous correspondent le mieux."
+        icon={QuizIcon}
+        color="linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)"
       />
 
       <motion.div
@@ -547,7 +548,6 @@ function Orientation() {
                 variant="h4" 
                 fontWeight="bold" 
                 sx={{ 
-                  color: '#333', 
                   mb: 3,
                   textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

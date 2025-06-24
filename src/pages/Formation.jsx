@@ -19,7 +19,7 @@ const Formation = () => {
   const [selectedDomain, setSelectedDomain] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [compatibilityFilterOn, setCompatibilityFilterOn] = useState(false);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
   
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 1000);
@@ -160,10 +160,10 @@ const Formation = () => {
   return (
     <Box sx={{ p: 4, background: '#f8f9fa', minHeight: '100vh' }}>
       <PageTitle 
-        title="Formations disponibles"
-        subtitle="Découvrez toutes les formations proposées par les universités malgaches. Filtrez par domaine, recherchez par mot-clé ou trouvez les formations compatibles avec votre profil."
-        icon={SchoolIcon}
-        color="#667eea"
+        title="Formations à Madagascar"
+        subtitle="Découvrez toutes les formations disponibles dans les universités et établissements d'enseignement supérieur de Madagascar."
+        icon={WorkIcon}
+        color="linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)"
       />
       
       <motion.div
@@ -290,12 +290,12 @@ const Formation = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
       >
-        <Grid container spacing={3}>
+        <Grid container spacing={2} justifyContent="center">
           {paginatedCourses.map((course) => (
-            <Grid item key={course.id} sx={{ display: 'flex' }}>
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', justifyContent: 'center' }}>
               <Card 
                 sx={{ 
-                  width: 355,
+                  width: 300,
                   display: 'flex', 
                   flexDirection: 'column',
                   background: 'white',
@@ -330,7 +330,7 @@ const Formation = () => {
 
                   {/* Débouchés */}
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mt: 2 }}>
-                    <WorkIcon sx={{ color: '#764ba2', fontSize: 18, mt: 0.5, flexShrink: 0 }} />
+                    <WorkIcon sx={{ color: '#764ba2', fontSize: 18, mt: 0.5, flexShrink: 0}} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography 
                         variant="body1" 

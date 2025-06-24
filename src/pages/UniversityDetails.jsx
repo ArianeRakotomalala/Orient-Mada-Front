@@ -133,7 +133,7 @@ const UniversityDetails = () => {
     const [university, setUniversity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { courses, events, users, refreshCourses } = useContext(DataContext); 
+    const { courses, events, users, eventRegistrations, refreshCourses, refreshEvents } = useContext(DataContext); 
     const [mapPosition, setMapPosition] = useState(null);
     const { user } = useContext(UserContext);
     const [registeredEvents, setRegisteredEvents] = useState([]); // ids des events où l'utilisateur est inscrit
@@ -272,6 +272,57 @@ const UniversityDetails = () => {
     const toggleAutoPlay = () => {
         setAutoPlay(!autoPlay);
     };
+
+    // Initialiser les événements auxquels l'utilisateur est inscrit
+    useEffect(() => {
+        if (user && eventRegistrations && Array.isArray(eventRegistrations)) {
+            const userRegistrations = eventRegistrations
+                .filter(reg => {
+                    if (!reg.user) return false;
+                    const userId = typeof reg.user === 'string' ? reg.user.split('/').pop() : reg.user.id;
+                    return String(userId) === String(user.id);
+                })
+                .map(reg => {
+                    if (!reg.events) return null;
+                    return typeof reg.events === 'string' ? reg.events.split('/').pop() : reg.events.id;
+                })
+                .filter(Boolean)
+                .map(String);
+            setRegisteredEvents(userRegistrations);
+        }
+    }, [user, eventRegistrations]);
+
+    // Fonction pour annuler la participation
+    const handleCancelParticipation = async (eventId) => {
+        if (!user?.id) return;
+        // Trouver l'inscription correspondante
+        const registration = eventRegistrations.find(reg => {
+            const regEventId = reg.events ? (typeof reg.events === 'string' ? reg.events.split('/').pop() : reg.events.id) : null;
+            const regUserId = reg.user ? (typeof reg.user === 'string' ? reg.user.split('/').pop() : reg.user.id) : null;
+            return String(regEventId) === String(eventId) && String(regUserId) === String(user.id);
+        });
+        if (!registration) {
+            alert("Inscription non trouvée.");
+            return;
+        }
+        setLoadingRegister(prev => ({ ...prev, [eventId]: true }));
+        try {
+            await axios.delete(`/api/event_registrations/${registration.id}`);
+            setRegisteredEvents(prev => prev.filter(id => id !== String(eventId)));
+            refreshEvents && refreshEvents();
+        } catch (e) {
+            alert("Erreur lors de l'annulation de la participation");
+        } finally {
+            setLoadingRegister(prev => ({ ...prev, [eventId]: false }));
+        }
+    };
+
+    // Filtrer les événements à venir
+    const now = new Date();
+    const upcomingEvents = universityEvents.filter(event => {
+        if (!event.eventDateTime) return true;
+        return new Date(event.eventDateTime) > now;
+    });
 
     if (loading || !mapPosition) {
         return (
@@ -582,9 +633,9 @@ const UniversityDetails = () => {
                     <StyledCard sx={{ minHeight: 500, display: 'flex', flexDirection: 'column' }}>
                         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <Typography variant="h6" fontWeight={600} gutterBottom>Événements</Typography>
-                            {universityEvents.length > 0 ? (
+                            {upcomingEvents.length > 0 ? (
                                 <Box sx={{ flex: 1, overflow: 'auto' }}>
-                                    {universityEvents.map(event => (
+                                    {upcomingEvents.map(event => (
                                         <Card key={event.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #f0f0f0' }}>
                                             <CardContent sx={{ p: 2 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -601,8 +652,16 @@ const UniversityDetails = () => {
                                                     Lieu : {university.institution_name}, {university.location}, {university.region}
                                                 </Typography>
                                                 <Box sx={{ mt: 1 }}>
-                                                    {registeredEvents.includes(event.id) ? (
-                                                        <CheckCircleIcon sx={{ color: 'green', fontSize: 28 }} />
+                                                    {registeredEvents.includes(String(event.id)) ? (
+                                                        <Button
+                                                            variant="outlined"
+                                                            color="secondary"
+                                                            onClick={() => handleCancelParticipation(event.id)}
+                                                            disabled={loadingRegister[event.id]}
+                                                            size="small"
+                                                        >
+                                                            Annuler la participation
+                                                        </Button>
                                                     ) : (
                                                         <Button
                                                             variant="contained"

@@ -3,6 +3,7 @@ import { DataContext } from "../Context/DataContext";
 import SchoolIcon from '@mui/icons-material/School';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import WorkIcon from '@mui/icons-material/Work';
 import {
   Box,
   Typography,
@@ -28,6 +29,7 @@ import Rating from '@mui/material/Rating';
 import useDebounce from '../useDebounce';
 import PageTitle from '../components/PageTitle';
 import { motion } from 'framer-motion';
+import Pagination from '@mui/material/Pagination';
 
 function University() {
   const navigate = useNavigate();
@@ -37,6 +39,8 @@ function University() {
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedFormation, setSelectedFormation] = useState("");
   const [selectedCost, setSelectedCost] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Debounced values
   const debouncedSearch = useDebounce(search, 400);
@@ -162,6 +166,19 @@ function University() {
   // Debug log
   console.log("Filtered universities:", filtered);
 
+  // Reset page to 1 on filter/search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, debouncedRegion, debouncedFormation, debouncedCost]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedUniversities = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <Box
       sx={{
@@ -177,8 +194,8 @@ function University() {
         <PageTitle 
           title="Les universités à Madagascar"
           subtitle="Explorez toutes les universités et établissements d'enseignement supérieur de Madagascar. Trouvez l'institution qui correspond le mieux à vos aspirations académiques et professionnelles."
-          icon={TravelExploreIcon}
-          color="#667eea"
+          icon={WorkIcon}
+          color="linear-gradient(90deg, #B67878 0%,rgb(214, 168, 198) 100%)"
         />
 
         <motion.div
@@ -338,7 +355,7 @@ function University() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Grid container spacing={3}>
+            <Grid container spacing={3} justifyContent="center">
               {[...Array(6)].map((_, idx) => (
                 <Grid item xs={12} md={4} key={idx} sx={{ display: 'flex', justifyContent: 'center' }}>
                   <Card sx={{ width: 360, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
@@ -363,170 +380,198 @@ function University() {
             <>
               <Box sx={{ mb: 2 }}>
                 {filtered.length === 0 ? (
-                  <Typography variant="subtitle1" color="text.secondary" align="center">
+                  <Typography variant="subtitle1" align="center">
                     Aucun résultat trouvé.
                   </Typography>
                 ) : (
-                  <Typography variant="subtitle1" color="text.secondary" align="center">
+                  <Typography variant="subtitle1" align="center">
                     {filtered.length} résultat{filtered.length > 1 ? 's' : ''} affiché{filtered.length > 1 ? 's' : ''}
                   </Typography>
                 )}
               </Box>
               {filtered.length === 0 ? null : (
-                <Grid container spacing={2}>
-                  {filtered.map((uni) => (
-                    <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
-                      <Card
-                        sx={{
-                          width: 367,
-                          minHeight: 320,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          cursor: 'pointer',
-                          transition: 'transform 0.2s, box-shadow 0.2s',
-                          '&:hover': {
-                            transform: 'translateY(-4px)',
-                            boxShadow: 6
-                          },
-                          borderRadius:5
-                        }}
-                        onClick={() => handleViewDetails(uni.id)}
-                      >
-                        <Box
+                <>
+                  <Grid container spacing={3} justifyContent="center">
+                    {paginatedUniversities.map((uni) => (
+                      <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
+                        <Card
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: '#f5f5f5',
-                            p: 1,
-                            m: 0,
-                            width: '100%',
-                          }}
-                        >
-                          {uni.logo ? (
-                            <CardMedia
-                              component="img"
-                              sx={{ objectFit: 'contain', width: '100%', maxHeight: 170 }}
-                              image={uni.logo}
-                              alt={uni.institution_name}
-                            />
-                          ) : uni.photo ? (
-                            <CardMedia
-                              component="img"
-                              sx={{ objectFit: 'contain', width: '100%', maxHeight: 150 }}
-                              image={uni.photo}
-                              alt={uni.institution_name}
-                            />
-                          ) : (
-                            <SchoolIcon sx={{ fontSize: 80, color: '#1976d2' }} />
-                          )}
-                        </Box>
-                        <CardContent
-                          sx={{
-                            flexGrow: 1,
+                            width: 300,
+                            minHeight: 320,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 1,
-                            p: 1,
-                            minHeight: 100,
-                            textAlign: 'justify',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: 6
+                            },
+                            borderRadius:5
                           }}
+                          onClick={() => handleViewDetails(uni.id)}
                         >
-                          <Typography
-                            variant="subtitle1"
-                            component="h2"
-                            fontWeight={700}
+                          <Box
                             sx={{
-                              fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' },
-                              wordBreak: 'break-word',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              bgcolor: '#f5f5f5',
+                              p: 1,
+                              m: 0,
                               width: '100%',
-                              mb: 1,
-                              lineHeight: 1.2,
-                              textAlign: 'left',
-                              minHeight: '2.4em',
-                              maxHeight: '3.6em',
-                              overflow: 'hidden',
-                              display: 'block',
-                            
                             }}
-                            title={uni.institution_name}
                           >
-                            {uni.institution_name}
-                          </Typography>
-                          <Box sx={{ 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            gap: 1.5,
-                            flexGrow: 1,
-                            justifyContent: 'space-between',
-                          }}>
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}>
-                                Type : {(() => {
-                                  const typeClean = (uni.type || "").trim().toLowerCase();
-                                  const isPublic = typeClean === "publique" || typeClean === "public";
-                                  return (
-                                    <Typography
-                                      component="span"
-                                      sx={{
-                                        color: isPublic ? "#2e7d32" : "#1976d2",
-                                        fontWeight: 600,
-                                        ml: 0.5
-                                      }}
-                                    >
-                                      {uni.type}
-                                    </Typography>
-                                  );
-                                })()}
-                              </Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  width: '100%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                  textAlign: 'justify',
-                                }}
-                                title={uni.region}
-                              >
-                                <TravelExploreIcon sx={{ fontSize: 18, mr: 0.5, color: '#ed6c02' }} />
-                                <span style={{ flex: 1 }}>{uni.region}</span>
-                              </Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary" mb={0.5} fontWeight={600}
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  width: '100%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                  textAlign: 'justify',
-                                }}
-                                title={uni.location}
-                              >
-                                <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: '#1976d2' }} />
-                                <span style={{ flex: 1 }}>{uni.location}</span>
-                              </Typography>
-                            </Box>
-                            <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'center', minHeight: 32 }}>
-                              <Rating 
-                                name={`rating-${uni.id}`}
-                                value={2.5 + (parseInt(uni.id, 10) % 25) / 10}
-                                precision={0.5} 
-                                readOnly 
-                                size="small" 
+                            {uni.logo ? (
+                              <CardMedia
+                                component="img"
+                                sx={{ objectFit: 'contain', width: '100%', maxHeight: 170 }}
+                                image={uni.logo}
+                                alt={uni.institution_name}
                               />
-                            </Box>
+                            ) : uni.photo ? (
+                              <CardMedia
+                                component="img"
+                                sx={{ objectFit: 'contain', width: '100%', maxHeight: 150 }}
+                                image={uni.photo}
+                                alt={uni.institution_name}
+                              />
+                            ) : (
+                              <SchoolIcon sx={{ fontSize: 80, color: '#1976d2' }} />
+                            )}
                           </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
+                          <CardContent
+                            sx={{
+                              flexGrow: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 1,
+                              p: 1,
+                              minHeight: 100,
+                              textAlign: 'justify',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              component="h2"
+                              fontWeight={700}
+                              sx={{
+                                fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' },
+                                wordBreak: 'break-word',
+                                width: '100%',
+                                mb: 1,
+                                lineHeight: 1.2,
+                                textAlign: 'left',
+                                minHeight: '2.4em',
+                                maxHeight: '3.6em',
+                                overflow: 'hidden',
+                                display: 'block',
+                              
+                              }}
+                              title={uni.institution_name}
+                            >
+                              {uni.institution_name}
+                            </Typography>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              flexDirection: 'column',
+                              gap: 1.5,
+                              flexGrow: 1,
+                              justifyContent: 'space-between',
+                            }}>
+                              <Box>
+                                <Typography variant="subtitle2" mb={0.5} fontWeight={600}>
+                                  Type : {(() => {
+                                    const typeClean = (uni.type || "").trim().toLowerCase();
+                                    const isPublic = typeClean === "publique" || typeClean === "public";
+                                    return (
+                                      <Typography
+                                        component="span"
+                                        sx={{
+                                          color: isPublic ? "#2e7d32" : "#1976d2",
+                                          fontWeight: 600,
+                                          ml: 0.5
+                                        }}
+                                      >
+                                        {uni.type}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle2" mb={0.5} fontWeight={600}
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    width: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    textAlign: 'justify',
+                                  }}
+                                  title={uni.region}
+                                >
+                                  <TravelExploreIcon sx={{ fontSize: 18, mr: 0.5, color: '#ed6c02' }} />
+                                  <span style={{ flex: 1 }}>{uni.region}</span>
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle2" mb={0.5} fontWeight={600}
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    width: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    textAlign: 'justify',
+                                  }}
+                                  title={uni.location}
+                                >
+                                  <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: '#1976d2' }} />
+                                  <span style={{ flex: 1 }}>{uni.location}</span>
+                                </Typography>
+                              </Box>
+                              <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'center', minHeight: 32 }}>
+                                <Rating 
+                                  name={`rating-${uni.id}`}
+                                  value={2.5 + (parseInt(uni.id, 10) % 25) / 10}
+                                  precision={0.5} 
+                                  readOnly 
+                                  size="small" 
+                                />
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                  {totalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5, py: 2 }}>
+                      <Pagination
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        color="primary"
+                        size="large"
+                        showFirstButton
+                        showLastButton
+                        sx={{
+                          '& .MuiPaginationItem-root': {
+                            color: '#4a5568',
+                            fontWeight: 600
+                          },
+                          '& .Mui-selected': {
+                            backgroundColor: '#1976d2 !important',
+                            color: 'white',
+                          },
+                          '& .MuiPaginationItem-ellipsis': {
+                            color: '#4a5568'
+                          }
+                        }}
+                      />
+                    </Box>
+                  )}
+                </>
               )}
             </>
           </motion.div>
