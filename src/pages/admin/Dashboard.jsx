@@ -139,7 +139,7 @@ const Dashboard = () => {
       >
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {stats.map((stat, index) => (
-            <Grid xs={12} sm={6} md={6} key={stat.title}>
+            <Grid xs={12} sm={12} md={6} key={stat.title}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -148,7 +148,9 @@ const Dashboard = () => {
                 <Card 
                   sx={{ 
                     width: '100%',
+                    minWidth: 250,
                     height: '100%',
+                    minHeight: 180,
                     background: `linear-gradient(135deg, ${stat.color} 0%, ${alpha(stat.color, 0.7)} 100%)`,
                     borderRadius: 3,
                     boxShadow: `0 8px 24px ${alpha(stat.color, 0.2)}`,

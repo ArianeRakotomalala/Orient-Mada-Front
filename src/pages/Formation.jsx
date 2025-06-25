@@ -290,12 +290,12 @@ const Formation = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
       >
-        <Grid container spacing={2} justifyContent="center">
+        <Grid container spacing={1} justifyContent="center">
           {paginatedCourses.map((course) => (
             <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', justifyContent: 'center' }}>
               <Card 
                 sx={{ 
-                  width: 300,
+                  width: 270,
                   display: 'flex', 
                   flexDirection: 'column',
                   background: 'white',

@@ -15,6 +15,7 @@ export const ListUserProvider = ({ children }) => {
                 const response = await axios.get('/api/users');
                 const data = response.data;
                 const userList = data['hydra:member'] || data.member || (Array.isArray(data) ? data : []);
+                console.log('userList', userList);
                 setUsers(userList);
                 setError(null);
             } catch (err) {

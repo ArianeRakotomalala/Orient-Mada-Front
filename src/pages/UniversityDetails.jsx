@@ -109,15 +109,15 @@ const HeaderBox = styled(Box)(({ theme }) => ({
 }));
 
 const HeaderLogo = styled('img')(({ theme }) => ({
-    width: 180,
-    height: 180,
+    width: 220,
+    height: 220,
     objectFit: 'cover',
     borderRadius: '10px',
     background: '#f5f5f5',
     border: '1px solid #eee',
     [theme.breakpoints.down('sm')]: {
-        width: 130,
-        height: 130,
+        width: 160,
+        height: 160,
     },
 }));
 
@@ -150,6 +150,10 @@ const UniversityDetails = () => {
     const [autoPlay, setAutoPlay] = useState(true);
     const [expandedAccordion, setExpandedAccordion] = useState(null);
     const formationsPerPage = 5;
+
+    // Pagination pour les événements
+    const [currentEventPage, setCurrentEventPage] = useState(1);
+    const eventsPerPage = 1;
 
     // Calculer les formations et événements de l'université
     const universityCourses = university && Array.isArray(courses)
@@ -188,15 +192,27 @@ const UniversityDetails = () => {
         if (Array.isArray(university.coordinates) && university.coordinates.length === 2) {
             setMapPosition(university.coordinates);
         } else {
-            // Géocoder location + region
-            const query = [university.location, university.region, 'Madagascar'].filter(Boolean).join(', ');
-            if (!query) {
+            // Géocoder location + region + nom université (nettoyé)
+            let cleanName = university && university.institution_name ? university.institution_name.replace(/\s*\([^)]*\)/g, '').trim() : '';
+            const queryFull = [
+                cleanName,
+                university && university.location ? university.location : '',
+                university && university.region ? university.region : '',
+                'Madagascar'
+            ].filter(Boolean).join(', ');
+            const querySimple = [
+                university && university.location ? university.location : '',
+                university && university.region ? university.region : '',
+                'Madagascar'
+            ].filter(Boolean).join(', ');
+            console.log('Requête de géocodage envoyée à Nominatim (complète):', queryFull);
+            if (!queryFull) {
                 setMapPosition([-18.8792, 47.5079]); // Antananarivo par défaut
                 return;
             }
             axios.get(`https://nominatim.openstreetmap.org/search`, {
                 params: {
-                    q: query,
+                    q: queryFull,
                     format: 'json',
                     limit: 1
                 },
@@ -211,7 +227,29 @@ const UniversityDetails = () => {
                         parseFloat(res.data[0].lon)
                     ]);
                 } else {
-                    setMapPosition([-18.8792, 47.5079]);
+                    // Si aucun résultat, essayer avec la requête simple (ville + région)
+                    console.log('Aucun résultat avec le nom, on tente avec ville + région:', querySimple);
+                    axios.get(`https://nominatim.openstreetmap.org/search`, {
+                        params: {
+                            q: querySimple,
+                            format: 'json',
+                            limit: 1
+                        },
+                        headers: {
+                            'Accept-Language': 'fr',
+                        }
+                    })
+                    .then(res2 => {
+                        if (res2.data && res2.data.length > 0) {
+                            setMapPosition([
+                                parseFloat(res2.data[0].lat),
+                                parseFloat(res2.data[0].lon)
+                            ]);
+                        } else {
+                            setMapPosition([-18.8792, 47.5079]);
+                        }
+                    })
+                    .catch(() => setMapPosition([-18.8792, 47.5079]));
                 }
             })
             .catch(() => setMapPosition([-18.8792, 47.5079]));
@@ -323,6 +361,18 @@ const UniversityDetails = () => {
         if (!event.eventDateTime) return true;
         return new Date(event.eventDateTime) > now;
     });
+
+    const indexOfLastEvent = currentEventPage * eventsPerPage;
+    const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
+    const currentEvents = upcomingEvents.slice(indexOfFirstEvent, indexOfLastEvent);
+    const totalEventPages = Math.ceil(upcomingEvents.length / eventsPerPage);
+
+    const handleNextEventPage = () => {
+        setCurrentEventPage(prev => prev >= totalEventPages ? 1 : prev + 1);
+    };
+    const handlePrevEventPage = () => {
+        setCurrentEventPage(prev => prev <= 1 ? totalEventPages : prev - 1);
+    };
 
     if (loading || !mapPosition) {
         return (
@@ -521,11 +571,10 @@ const UniversityDetails = () => {
                                         display: 'flex', 
                                         alignItems: 'center', 
                                         gap: 1,
-                                        background: 'linear-gradient(45deg, #f0f8ff, #e3f2fd)',
+                                        background: 'rgb(248, 227, 238)',
                                         borderRadius: '20px',
                                         px: 2,
                                         py: 0.5,
-                                        border: '1px solid #e0e0e0'
                                     }}>
                                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                                             Page {currentPage} sur {totalPages}
@@ -632,10 +681,29 @@ const UniversityDetails = () => {
                 <Grid item xs={12} md={6} sx={{ minWidth: 350, maxWidth: 520, flex: '1 1 520px' }}>
                     <StyledCard sx={{ minHeight: 500, display: 'flex', flexDirection: 'column' }}>
                         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <Typography variant="h6" fontWeight={600} gutterBottom>Événements</Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="h6" fontWeight={600}>
+                                    Événements
+                                </Typography>
+                                {upcomingEvents.length > eventsPerPage && (
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 1,
+                                        background: 'rgb(248, 227, 238)',
+                                        borderRadius: '20px',
+                                        px: 2,
+                                        py: 0.5,
+                                    }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                            Page {currentEventPage} sur {totalEventPages}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
                             {upcomingEvents.length > 0 ? (
-                                <Box sx={{ flex: 1, overflow: 'auto' }}>
-                                    {upcomingEvents.map(event => (
+                                <Box sx={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    {currentEvents.map(event => (
                                         <Card key={event.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #f0f0f0' }}>
                                             <CardContent sx={{ p: 2 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -677,6 +745,25 @@ const UniversityDetails = () => {
                                             </CardContent>
                                         </Card>
                                     ))}
+                                    {/* Pagination events */}
+                                    {upcomingEvents.length > eventsPerPage && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 2, gap: 2 }}>
+                                            <IconButton 
+                                                onClick={handlePrevEventPage}
+                                                size="large"
+                                                sx={{ backgroundColor: '#f5f5f5', '&:hover': { backgroundColor: '#e0e0e0' } }}
+                                            >
+                                                <NavigateBeforeIcon />
+                                            </IconButton>
+                                            <IconButton 
+                                                onClick={handleNextEventPage}
+                                                size="large"
+                                                sx={{ backgroundColor: '#f5f5f5', '&:hover': { backgroundColor: '#e0e0e0' } }}
+                                            >
+                                                <NavigateNextIcon />
+                                            </IconButton>
+                                        </Box>
+                                    )}
                                 </Box>
                             ) : (
                                 <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

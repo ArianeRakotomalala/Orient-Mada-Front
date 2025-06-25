@@ -355,10 +355,10 @@ function University() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Grid container spacing={3} justifyContent="center">
+            <Grid container spacing={1} justifyContent="center">
               {[...Array(6)].map((_, idx) => (
                 <Grid item xs={12} md={4} key={idx} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Card sx={{ width: 360, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
+                  <Card sx={{ width: 275, minHeight: 380, display: 'flex', flexDirection: 'column' }}>
                     <Skeleton variant="rectangular" height={140} />
                     <CardContent>
                       <Skeleton variant="text" width="80%" height={32} />
@@ -391,12 +391,12 @@ function University() {
               </Box>
               {filtered.length === 0 ? null : (
                 <>
-                  <Grid container spacing={3} justifyContent="center">
+                  <Grid container spacing={1} justifyContent="center">
                     {paginatedUniversities.map((uni) => (
                       <Grid  key={uni.id} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
                         <Card
                           sx={{
-                            width: 300,
+                            width: 275,
                             minHeight: 320,
                             display: 'flex',
                             flexDirection: 'column',
@@ -406,7 +406,7 @@ function University() {
                               transform: 'translateY(-4px)',
                               boxShadow: 6
                             },
-                            borderRadius:5
+                            borderRadius:2
                           }}
                           onClick={() => handleViewDetails(uni.id)}
                         >
