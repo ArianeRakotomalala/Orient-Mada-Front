@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { UserContext } from '../Context/UserContext';
-import { DataContext } from '../Context/DataContext';
+import { UserContext } from '../context/UserContext';
+import { DataContext } from '../context/DataContext';
 import Bouton from '../components/Bouton';
 import {
   Box,

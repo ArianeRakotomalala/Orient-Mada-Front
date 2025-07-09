@@ -27,10 +27,11 @@ import {
   People as PeopleIcon,
   Settings as SettingsIcon,
   Dashboard as DashboardIcon,
+  Event as EventIcon,
   Logout as LogoutIcon,
   AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
-import { UserContext } from '../Context/UserContext';
+import { UserContext } from '../context/UserContext';
 import { motion } from 'framer-motion';
 
 const drawerWidth = 280;
@@ -62,7 +63,8 @@ const AdminLayout = () => {
     { text: 'Formations', icon: <SchoolIcon />, path: '/admin/formations' },
     { text: 'Universités', icon: <BusinessIcon />, path: '/admin/universities' },
     { text: 'Utilisateurs', icon: <PeopleIcon />, path: '/admin/users' },
-    { text: 'Paramètres', icon: <SettingsIcon />, path: '/admin/settings' },
+    // { text: 'Paramètres', icon: <SettingsIcon />, path: '/admin/settings' },
+    { text: 'Événements', icon: <EventIcon />, path: '/admin/evenements' },
   ];
 
   const handleMenuClick = (path) => {

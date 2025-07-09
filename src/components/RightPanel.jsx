@@ -5,7 +5,7 @@ import Avatar from '@mui/material/Avatar';
 import Rating from '@mui/material/Rating';
 import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import { DataContext } from "../Context/DataContext";
+import { DataContext } from "../context/DataContext";
 import EventIcon from '@mui/icons-material/Event';
 
 function RightPanel(){

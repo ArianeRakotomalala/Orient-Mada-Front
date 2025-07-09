@@ -16,8 +16,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PeopleIcon from '@mui/icons-material/People';
 import PageTitle from '../components/PageTitle';
-import { DataContext } from '../Context/DataContext';
-import { UserContext } from '../Context/UserContext';
+import { DataContext } from '../context/DataContext';
+import { UserContext } from '../context/UserContext';
 import axios from 'axios';
 
 const Events = () => {

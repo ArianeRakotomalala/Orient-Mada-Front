@@ -39,7 +39,7 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import StarIcon from '@mui/icons-material/Star';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CloseIcon from '@mui/icons-material/Close';
-import { DataContext } from '../Context/DataContext';
+import { DataContext } from '../context/DataContext';
 import PageTitle from '../components/PageTitle';
 import { motion, AnimatePresence } from 'framer-motion';
 

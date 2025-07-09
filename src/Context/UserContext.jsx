@@ -1,17 +1,33 @@
 import { createContext, useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/axios";
+import { jwtDecode } from "jwt-decode";
 
 export const UserContext = createContext();
 
 const getInitialUser = () => {
   try {
+    // Priorité au jwtToken
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const payload = jwtDecode(token);
+      console.log('[DEBUG JWT] payload décodé:', payload);
+      // On suppose que le payload contient id, roles, email, etc.
+      const userObj = {
+        id: payload.id || payload.user_id || payload.sub,
+        roles: payload.roles,
+        email: payload.email,
+        ...payload
+      };
+      console.log('[DEBUG JWT] user initialisé:', userObj);
+      return userObj;
+    }
+    // Fallback sur user_info si pas de token
     const userInfo = localStorage.getItem("user_info");
     if (userInfo) {
       return JSON.parse(userInfo);
     }
   } catch (error) {
-    console.error("Erreur lors de la lecture du localStorage :", error);
-    // En cas d'erreur de parsing, nettoyer le localStorage
+    console.error("Erreur lors de la lecture du localStorage ou du décodage JWT:", error);
     localStorage.removeItem("user_info");
   }
   return null;
@@ -27,7 +43,7 @@ export const UserProvider = ({ children }) => {
     if (!user?.id) return;
     setLoadingFavoris(true);
     try {
-      const response = await axios.get(`/api/favorites`, {
+      const response = await api.get(`/api/favorites`, {
         params: { user: user.id },
       });
       // Compatibilité hydra:member/member/array
@@ -59,7 +75,7 @@ export const UserProvider = ({ children }) => {
       return false;
     }
     try {
-      const res = await axios.post(
+      const res = await api.post(
         '/api/favorites',
         {
           collection_name: collectionName,
@@ -88,7 +104,7 @@ export const UserProvider = ({ children }) => {
       return false;
     }
     try {
-      await axios.delete(`/api/favorites/${favoriId}`);
+      await api.delete(`/api/favorites/${favoriId}`);
       setFavoris(prev => prev.filter(fav => {
         const id = fav.id || (fav['@id'] ? fav['@id'].split('/').pop() : undefined);
         return id !== favoriId;
@@ -115,10 +131,11 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    console.log('[DEBUG JWT] user dans UserProvider:', user);
     if (!user) return; // Si aucun utilisateur n'est connecté, ne rien faire
     
     // Chargement du profil utilisateur lié à l'utilisateur connecté
-    axios
+    api
       .get('/api/users_profils', { params: { user: `/api/users/${user.id}` } })
       .then((response) => {
         let profils = response.data['hydra:member'] || response.data.member || [];

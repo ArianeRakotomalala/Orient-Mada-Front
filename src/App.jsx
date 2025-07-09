@@ -1,7 +1,7 @@
 import { BrowserRouter } from 'react-router-dom'
 import AppRoute from './Routes'
-import { UserProvider } from './Context/UserContext';
-import { DataProvider } from './Context/DataContext';
+import { UserProvider } from './context/UserContext';
+import { DataProvider } from './context/DataContext';
 import { ListUserProvider } from './context/ListUserContext';
 
 function App() {

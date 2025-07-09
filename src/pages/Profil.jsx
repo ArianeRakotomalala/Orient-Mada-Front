@@ -25,8 +25,8 @@ import {
   Tooltip,
 } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
-import { UserContext } from "../Context/UserContext";
-import { DataContext } from "../Context/DataContext";
+import { UserContext } from "../context/UserContext";
+import { DataContext } from "../context/DataContext";
 import { Phone, Email, LocationOn, Cake, Person, Interests, Favorite, Bookmark as BookmarkIcon, AccessTime, People } from "@mui/icons-material";
 import axios from 'axios';
 import MuiAlert from '@mui/material/Alert';
@@ -263,10 +263,9 @@ export default function Profil() {
                 bgcolor: "#1976d2",
                 fontSize: 56,
               }}
+              src={userProfils?.photo || undefined}
             >
-              {userProfils?.name
-                ? userProfils.name.charAt(0).toUpperCase()
-                : (user.email ? user.email.charAt(0).toUpperCase() : "?")}
+              {(!userProfils?.photo && (userProfils?.firstname?.charAt(0) || userProfils?.name?.charAt(0) || user.email?.charAt(0)))?.toUpperCase()}
             </Avatar>
             <IconButton
               sx={{
@@ -285,15 +284,20 @@ export default function Profil() {
               <input hidden accept="image/*" type="file" />
             </IconButton>
           </Box>
-          <Typography variant="h5" fontWeight={800} mb={4} color="text.primary" textAlign="center">
-            {userProfils?.name
-              ? `${userProfils.name.charAt(0).toUpperCase() + userProfils.name.slice(1).toLowerCase()}${userProfils.firstname ? ' ' + userProfils.firstname.charAt(0).toUpperCase() + userProfils.firstname.slice(1).toLowerCase() : ''}`
-              : (user.email ? user.email.charAt(0).toUpperCase() + user.email.slice(1).toLowerCase() : "")}
+          <Typography variant="h5" fontWeight={800} mb={1.5} color="text.primary" textAlign="center">
+            {userProfils?.firstname || userProfils?.name
+              ? `${userProfils?.firstname ? userProfils.firstname.charAt(0).toUpperCase() + userProfils.firstname.slice(1).toLowerCase() : ''}${userProfils?.name ? ' ' + userProfils.name.charAt(0).toUpperCase() + userProfils.name.slice(1).toLowerCase() : ''}`.trim()
+              : (user.email ? user.email : "")}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>
+            {user.email || ''}
           </Typography>
 
           <Stack spacing={2}>
-            <TextField label="Nom" value={formData.nom} onChange={handleChange("nom")} variant="outlined" fullWidth />
-            <TextField label="Prénom" value={formData.prenom} onChange={handleChange("prenom")} variant="outlined" fullWidth />
+            <TextField label="Nom" value={formData.nom} onChange={handleChange("nom")} variant="outlined" fullWidth
+              placeholder={userProfils?.name || ''} />
+            <TextField label="Prénom" value={formData.prenom} onChange={handleChange("prenom")} variant="outlined" fullWidth
+              placeholder={userProfils?.firstname || ''} />
             <TextField
               label="Email"
               value={formData.email}
@@ -301,6 +305,7 @@ export default function Profil() {
               InputProps={{ startAdornment: <Email sx={{ mr: 1, color: "action.active" }} /> }}
               variant="outlined"
               fullWidth
+              placeholder={user.email || ''}
             />
             <TextField
               label="Téléphone"
@@ -309,6 +314,7 @@ export default function Profil() {
               InputProps={{ startAdornment: <Phone sx={{ mr: 1, color: "action.active" }} /> }}
               variant="outlined"
               fullWidth
+              placeholder={user.telephone || ''}
             />
             <FormControl fullWidth>
               <InputLabel id="serie-label">Série</InputLabel>
@@ -317,8 +323,9 @@ export default function Profil() {
                 label="Série"
                 value={formData.serie}
                 onChange={handleChange("serie")}
+                displayEmpty
               >
-                <MenuItem value="">Sélectionnez votre série</MenuItem>
+                <MenuItem value="">{userProfils?.serie || 'Sélectionnez votre série'}</MenuItem>
                 <MenuItem value="A1">A1</MenuItem>
                 <MenuItem value="A2">A2</MenuItem>
                 <MenuItem value="C">C</MenuItem>
@@ -334,6 +341,7 @@ export default function Profil() {
               InputProps={{ startAdornment: <Cake sx={{ mr: 1, color: "action.active" }} /> }}
               variant="outlined"
               fullWidth
+              placeholder={userProfils?.birthday || ''}
             />
             <TextField
               label="Adresse"
@@ -342,6 +350,7 @@ export default function Profil() {
               InputProps={{ startAdornment: <LocationOn sx={{ mr: 1, color: "action.active" }} /> }}
               variant="outlined"
               fullWidth
+              placeholder={userProfils?.adress || ''}
             />
             <TextField
               label="Hobbies"
@@ -350,6 +359,7 @@ export default function Profil() {
               InputProps={{ startAdornment: <Interests sx={{ mr: 1, color: "action.active" }} /> }}
               variant="outlined"
               fullWidth
+              placeholder={userProfils?.hobbies || ''}
             />
             <Box textAlign="center" mt={2}>
               <Button variant="contained" onClick={handleSubmit} size="large" sx={{ px: 4, py: 1 }}>

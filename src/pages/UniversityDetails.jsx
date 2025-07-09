@@ -21,8 +21,8 @@ import { styled } from '@mui/material/styles';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { DataContext } from '../Context/DataContext'; // adapte le chemin si besoin
-import { UserContext } from '../Context/UserContext';
+import { DataContext } from '../context/DataContext'; // adapte le chemin si besoin
+import { UserContext } from '../context/UserContext';
 import EventIcon from '@mui/icons-material/Event';
 import PlaceIcon from '@mui/icons-material/Place';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';

@@ -1,10 +1,11 @@
 import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
-import { UserContext } from '../Context/UserContext';
+import { UserContext } from '../context/UserContext';
 import { Box, Typography, CircularProgress } from '@mui/material';
 
 const AdminRoute = ({ children }) => {
   const { user, userProfils } = useContext(UserContext);
+  const token = localStorage.getItem('jwtToken');
 
   // Logs de débogage
   console.log('AdminRoute - User:', user);
@@ -12,8 +13,8 @@ const AdminRoute = ({ children }) => {
   console.log('AdminRoute - User roles:', user?.roles);
 
   // Si pas d'utilisateur connecté, rediriger vers login
-  if (!user) {
-    console.log('AdminRoute - Pas d\'utilisateur, redirection vers login');
+  if (!user || !token) {
+    console.log("AdminRoute - Pas d'utilisateur ou pas de token, redirection vers login");
     return <Navigate to="/login" replace />;
   }
 

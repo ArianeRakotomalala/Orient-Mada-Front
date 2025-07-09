@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import { DataContext } from '../../Context/DataContext';
-import { UserContext } from '../../Context/UserContext';
+import { DataContext } from '../../context/DataContext';
+import { UserContext } from '../../context/UserContext';
 import { ListUserContext } from '../../context/ListUserContext';
 import { 
   Box, 

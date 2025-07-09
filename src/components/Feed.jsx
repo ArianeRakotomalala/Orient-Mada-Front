@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { DataContext } from "../Context/DataContext";
+import { DataContext } from "../context/DataContext";
 import PostCard from "./PostCard";
 import { Typography } from "@mui/material";
 

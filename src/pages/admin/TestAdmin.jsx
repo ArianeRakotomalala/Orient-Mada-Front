@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import { UserContext } from '../../Context/UserContext';
-import { DataContext } from '../../Context/DataContext';
+import { UserContext } from '../../context/UserContext';
+import { DataContext } from '../../context/DataContext';
 
 const TestAdmin = () => {
   const { user, userProfils } = useContext(UserContext);

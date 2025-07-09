@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { UserContext } from "../Context/UserContext";
+import { UserContext } from "../context/UserContext";
 import { useState } from "react";
 import {
     Card, CardHeader, CardMedia, CardContent, CardActions,

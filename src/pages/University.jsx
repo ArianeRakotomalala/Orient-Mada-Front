@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { DataContext } from "../Context/DataContext";
+import { DataContext } from "../context/DataContext";
 import SchoolIcon from '@mui/icons-material/School';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';

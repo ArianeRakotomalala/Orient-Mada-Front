@@ -11,6 +11,7 @@ import Profil from "./pages/Profil";
 import Message from "./pages/Message";
 import Compare from "./pages/Compare";
 import Events from "./pages/Events";
+import Notifications from './pages/Notifications';
 
 // Import des composants d'administration
 import AdminLayout from "./components/AdminLayout";
@@ -21,6 +22,8 @@ import TestAdmin from "./pages/admin/TestAdmin";
 import SimpleAdmin from "./pages/admin/SimpleAdmin";
 import Statistics from "./pages/admin/Statistics";
 import UniversityAdmin from "./pages/admin/UniversityAdmin";
+import EvenementsAdmin from './pages/admin/EvenementsAdmin';
+import User from "./pages/admin/User";
     
 function AppRoute() {
     return (
@@ -38,6 +41,7 @@ function AppRoute() {
             <Route path="comparer" element={<Compare/>}/>
             <Route path="message" element={<Message/>}/>
             <Route path="event" element={<Events/>}/>
+            <Route path="notifications" element={<Notifications />} />
         </Route>
 
         {/* Routes d'administration protégées */}
@@ -50,9 +54,11 @@ function AppRoute() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="formations" element={<FormationAdmin />} />
             <Route path="universities" element={<UniversityAdmin />} />
-            <Route path="test" element={<TestAdmin />} />
+            <Route path="test" element={<TestAdmin />} />   
             <Route path="simple" element={<SimpleAdmin />} />
             <Route path="statistics" element={<Statistics />} />
+            <Route path="evenements" element={<EvenementsAdmin />} />
+            <Route path="users" element={<User />} />
             {/* Ajoutez d'autres routes admin ici */}
         </Route>
             

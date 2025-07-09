@@ -14,7 +14,7 @@ import {
   MenuItem,
   Typography
 } from '@mui/material';
-import { UserContext } from "../Context/UserContext";
+import { UserContext } from "../context/UserContext";
 import { useNavigate } from 'react-router-dom';
 
 export default function DialogFavoris({

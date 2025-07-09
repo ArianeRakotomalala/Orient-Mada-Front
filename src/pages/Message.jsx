@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { Box, Typography, TextField, Button, Paper, List, ListItem, ListItemText, Avatar } from "@mui/material";
-import { DataContext } from "../Context/DataContext";
+import { DataContext } from "../context/DataContext";
 import TexteAnimation from "../components/TexteAnimation";
 
 const Message = () => {
